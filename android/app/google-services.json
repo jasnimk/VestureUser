@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1047879162585",
+    "project_id": "vesture-dc927",
+    "storage_bucket": "vesture-dc927.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047879162585:android:a4958aeafab56256b2bcc8",
+        "android_client_info": {
+          "package_name": "com.example.vesture_firebase_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOdD1PO0juTlTqhTr7rt1SNeNJyvRs08M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047879162585:android:4a427752d6edd751b2bcc8",
+        "android_client_info": {
+          "package_name": "com.example.vesture_firebase_user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOdD1PO0juTlTqhTr7rt1SNeNJyvRs08M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
