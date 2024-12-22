@@ -25,7 +25,7 @@ ThemeData lightmode = ThemeData(
   ),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     backgroundColor: Colors.white,
-    selectedItemColor: Colors.red,
+    selectedItemColor: Color.fromRGBO(196, 28, 13, 0.829),
     unselectedItemColor: Colors.black87,
   ),
 );

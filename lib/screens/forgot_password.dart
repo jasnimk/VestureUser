@@ -56,32 +56,34 @@ class ForgotPassword extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(
-                height: 100,
-              ),
-              SizedBox(
-                height: 200,
-                width: 200,
-                child: Image.asset('assets/Images/logoooo.png'),
-              ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Enter your email',
-                  border: OutlineInputBorder(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(
+                  height: 100,
                 ),
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              customButton(
-                  context: context,
-                  text: 'Send Email',
-                  onPressed: handleSendEmail,
-                  height: 50),
-            ],
+                SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: Image.asset('assets/Images/logoooo.png'),
+                ),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Enter your email',
+                    border: OutlineInputBorder(),
+                  ),
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                customButton(
+                    context: context,
+                    text: 'Send Email',
+                    onPressed: handleSendEmail,
+                    height: 50),
+              ],
+            ),
           ),
         ),
       ),

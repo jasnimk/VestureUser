@@ -1,66 +1,48 @@
-// import 'package:flutter/material.dart';
-// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-// Widget customSearchField(BuildContext context) {
-//   TextEditingController _searchController = TextEditingController();
-
-//   // Function for voice search - add your logic here
-//   void _voiceSearch() {
-//     print("Voice search activated");
-//   }
-
-//   // Function for image search - add your logic here
-//   void _imageSearch() {
-//     print("Image search activated");
-//   }
-
-//   return Padding(
-//     padding: const EdgeInsets.all(16.0),
-//     child: Row(
-//       children: [
-//         IconButton(
-//           icon: const Icon(FontAwesomeIcons.microphone), // Voice search icon
-//           onPressed: _voiceSearch,
-//         ),
-//         IconButton(
-//           icon: const Icon(FontAwesomeIcons.image), // Image search icon
-//           onPressed: _imageSearch,
-//         ),
-//         Expanded(
-//           child: TextField(
-//             controller: _searchController,
-//             decoration: InputDecoration(
-//               hintText: 'Search...',
-//               suffixIcon: IconButton(
-//                 icon:
-//                     const Icon(FontAwesomeIcons.magnifyingGlass), // Search icon
-//                 onPressed: () {
-//                   print("Search triggered: ${_searchController.text}");
-//                 },
-//               ),
-//               border: const OutlineInputBorder(),
-//             ),
-//           ),
-//         ),
-//       ],
-//     ),
-//   );
-// }
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:vesture_firebase_user/bloc/Product/product_bloc.dart';
+import 'package:vesture_firebase_user/bloc/Product/product_event.dart';
+import 'package:vesture_firebase_user/bloc/bloc/categories_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/categories_event.dart';
+import 'package:vesture_firebase_user/models/category_model.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
-Widget customSearchField(BuildContext context) {
-  TextEditingController _searchController = TextEditingController();
+Widget customSearchField(
+  BuildContext context, {
+  CategoryModel? categor,
+  bool isCategorySearch = false,
+  void Function(String)? onSearch,
+}) {
+  final TextEditingController _searchController = TextEditingController();
 
-  // Function for voice search - add your logic here
-  void _voiceSearch() {
-    print("Voice search activated");
-  }
 
-  // Function for image search - add your logic here
-  void _imageSearch() {
-    print("Image search activated");
+  // void _voiceSearch() {
+  //   print("Voice search activated");
+  // }
+
+  // // Function for image search - add your logic here
+  // void _imageSearch() {
+  //   print("Image search activated");
+  // }
+
+
+
+  void performSearch(String query) {
+    query = query.trim().toLowerCase();
+    print('Search Query: $query');
+
+    if (isCategorySearch) {
+      // If it's a category search
+      context.read<CategoryBloc>().add(SearchCategoriesEvent(query: query));
+    } else {
+      // Existing product search logic
+      if (query.isNotEmpty) {
+        context.read<ProductBloc>().add(SearchProductsEvent(query: query));
+      } else {
+        context.read<ProductBloc>().add(FetchProductsEvent());
+      }
+    }
   }
 
   return Padding(
@@ -78,7 +60,7 @@ Widget customSearchField(BuildContext context) {
                 FontAwesomeIcons.microphone,
                 size: 15,
               ), // Voice search icon
-              onPressed: _voiceSearch,
+              onPressed: (){},
               iconSize: 20,
             ),
             IconButton(
@@ -86,7 +68,7 @@ Widget customSearchField(BuildContext context) {
                 FontAwesomeIcons.camera,
                 size: 15,
               ), // Image search icon
-              onPressed: _imageSearch,
+              onPressed:(){},
               iconSize: 20,
             ),
           ],
@@ -96,12 +78,12 @@ Widget customSearchField(BuildContext context) {
             FontAwesomeIcons.magnifyingGlass,
             size: 15,
           ), // Search icon
-          onPressed: () {
-            // print("Search triggered: ${_searchController.text}");
-          },
+          onPressed: () => performSearch(_searchController.text),
         ),
         border: const OutlineInputBorder(),
       ),
+      onChanged: performSearch, 
+      onSubmitted: performSearch, 
     ),
   );
 }

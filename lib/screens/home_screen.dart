@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:vesture_firebase_user/screens/shopping_page.dart';
+import 'package:vesture_firebase_user/screens/list_categories.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,7 +10,8 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String>> imageData = [
+class _HomeScreenState extends State<HomeScreen> {
+  final List<Map<String, String>> imageData = [
     {
       'image': 'assets/Images/kids2.jpg',
       'text': 'Kids Collection',
@@ -32,9 +33,8 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
     return Scaffold(
       body: Column(
         children: [
-            SizedBox(
-            height: MediaQuery.of(context).size.height *
-                0.4, 
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.4,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -90,12 +90,10 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
               ],
             ),
           ),
-         
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-               
                 Expanded(
                   flex: 1,
                   child: InkWell(
@@ -103,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const ShoppingPage()),
+                            builder: (context) => const ShopCategories()),
                       );
                     },
                     child: Image.asset(
@@ -114,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
                     ),
                   ),
                 ),
-                  Expanded(
+                Expanded(
                   flex: 1,
                   child: Column(
                     children: [
@@ -126,7 +124,8 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const ShoppingPage()),
+                                    builder: (context) =>
+                                        const ShopCategories()),
                               );
                             },
                             child: Image.asset(
@@ -156,7 +155,8 @@ class _HomeScreenState extends State<HomeScreen> { final List<Map<String, String
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => const ShoppingPage()),
+                                    builder: (context) =>
+                                        const ShopCategories()),
                               );
                             },
                             child: Image.asset(

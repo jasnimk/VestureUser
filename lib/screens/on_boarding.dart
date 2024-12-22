@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vesture_firebase_user/screens/login_screen.dart';
-import 'package:vesture_firebase_user/screens/signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -20,19 +19,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-void _markOnboardingComplete() async {
-  final prefs = await SharedPreferences.getInstance();
-  
-  // Explicitly set onboarding as complete
-  await prefs.setBool('onboarding_complete', true);
+  void _markOnboardingComplete() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  // Explicitly navigate to LoginScreen and clear previous routes
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (context) => LoginScreen()),
-    (route) => false,
-  );
-}
+    // Explicitly set onboarding as complete
+    await prefs.setBool('onboarding_complete', true);
+
+    // Explicitly navigate to LoginScreen and clear previous routes
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

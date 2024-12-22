@@ -91,6 +91,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       String displayName = userCredential.user!.displayName ?? 'User';
       emit(AuthState.authenticated(userCredential.user!.uid, displayName));
     } catch (e) {
+      log('Google Sign-In Error: $e');
       emit(AuthState.unauthenticated());
     }
   }
@@ -102,7 +103,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (user != null) {
         final userDoc =
             await _firestore.collection('users').doc(user.uid).get();
-        var userData = userDoc.data() as Map<String, dynamic>?;
+        var userData = userDoc.data();
 
         if (userData?['isBlocked'] == true) {
           await _firebaseAuth.signOut();

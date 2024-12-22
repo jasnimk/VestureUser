@@ -8,6 +8,8 @@ import 'package:vesture_firebase_user/screens/login_screen.dart';
 import 'package:vesture_firebase_user/screens/main_screen.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
+import 'package:vesture_firebase_user/widgets/custom_snackbar.dart';
+import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
@@ -20,20 +22,38 @@ class SignupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
-      if (state.status == AuthStatus.authenticated) {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => MainScreen(userId: state.userId!),
-    ),
-  );
-} else if (state.status == AuthStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'Sign up failed')),
+        if (state.status == AuthStatus.authenticated) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MainScreen(userId: state.userId!),
+            ),
+          );
+        } else if (state.status == AuthStatus.error) {
+          CustomSnackBar.show(
+            context,
+            message: 'Sign up failed, Try again with valid credentials!',
+            //backgroundColor: Colors.green, // Custom background color
+            textColor: Colors.white, // Custom text color
           );
         }
       },
       builder: (context, state) {
+        // If loading, return a full-screen loading indicator
+        if (state.status == AuthStatus.loading) {
+          return Scaffold(
+            body: Center(
+                child: customSpinkitLoaderWithType(
+              context: context,
+              type: SpinkitType.chasingDots,
+              color: Colors.red,
+              size: 60.0,
+            )),
+          );
+        }
+
+        // Normal signup screen UI
+
         return Scaffold(
           appBar: buildCustomAppBar(
               title: 'SignUp', context: context, showBackButton: false),
@@ -82,7 +102,8 @@ class SignupScreen extends StatelessWidget {
                   customButton(
                     text: 'SignUp',
                     onPressed: state.status == AuthStatus.loading
-                        ? () {}   : () {
+                        ? () {}
+                        : () {
                             context.read<AuthBloc>().add(
                                   SignUpRequested(
                                     name: nameController.text.trim(),
@@ -110,13 +131,12 @@ class SignupScreen extends StatelessWidget {
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
-                       context.read<AuthBloc>().add(GoogleSignInRequested());
+                      context.read<AuthBloc>().add(GoogleSignInRequested());
                     },
-
                     icon: Icon(
                       FontAwesomeIcons.google,
                       color: Theme.of(context).textTheme.labelLarge!.color,
-                    ), 
+                    ),
                     label: Text(
                       'Sign in with Google',
                       style: TextStyle(

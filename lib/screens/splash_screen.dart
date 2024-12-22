@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/authentication/authentication_bloc.dart';
-import 'package:vesture_firebase_user/bloc/authentication/authentication_event.dart';
 import 'package:vesture_firebase_user/bloc/authentication/authentication_state.dart';
 import 'package:vesture_firebase_user/screens/login_screen.dart';
 import 'package:vesture_firebase_user/screens/main_screen.dart';
@@ -69,7 +68,6 @@ class _SplashScreenState extends State<SplashScreen>
       log('Login Method: $loginMethod');
       log('User Email: $userEmail');
 
-     
       final currentUser = FirebaseAuth.instance.currentUser;
       log('Current Firebase User: ${currentUser?.uid}');
 
@@ -85,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen>
           MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
       } else if (currentUser != null) {
-          Navigator.pushReplacement(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => MainScreen(userId: currentUser.uid),
