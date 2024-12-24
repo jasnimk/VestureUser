@@ -65,6 +65,6 @@ class ColorUtil {
   // Get Color object directly from hex
   static Color getColorFromHex(String hex) {
     return Color(int.parse(
-        hex.startsWith('#') ? '0xFF' + hex.substring(1) : '0xFF' + hex));
+        hex.startsWith('#') ? '0xFF${hex.substring(1)}' : '0xFF$hex'));
   }
 }

@@ -81,6 +81,15 @@ class FavoriteRepository {
           continue;
         }
 
+        final productData = productDoc.data()!;
+
+        // Calculate category offer
+        final categoryOffer = await ProductModel.calculateCategoryOffer(
+          _firestore,
+          productData['parentCategoryId'] as String?,
+          productData['subCategoryId'] as String?,
+        );
+
         final variantsSnapshot = await _firestore
             .collection('variants')
             .where('productId', isEqualTo: productId)
@@ -112,8 +121,12 @@ class FavoriteRepository {
             brandDoc.data()?['title'] ??
             'Unknown Brand';
 
-        final product =
-            ProductModel.fromFirestore(productDoc, variants, brandName);
+        final product = ProductModel.fromFirestore(
+          productDoc,
+          variants,
+          brandName,
+          categoryOffer, // Add the calculated category offer
+        );
         favoriteProducts.add(product);
       } catch (productFetchError) {
         print('Error fetching product $productId: $productFetchError');
@@ -122,6 +135,73 @@ class FavoriteRepository {
 
     return favoriteProducts;
   }
+  // Future<List<ProductModel>> fetchFavorites() async {
+  //   final user = _auth.currentUser;
+  //   if (user == null) return [];
+
+  //   final favoritesQuery = await _firestore
+  //       .collection('users')
+  //       .doc(user.uid)
+  //       .collection('favorites')
+  //       .get();
+
+  //   final favorites =
+  //       favoritesQuery.docs.map((doc) => Favorite.fromFirestore(doc)).toList();
+
+  //   final uniqueProductIds = favorites.map((f) => f.productId).toSet();
+
+  //   List<ProductModel> favoriteProducts = [];
+
+  //   for (final productId in uniqueProductIds) {
+  //     try {
+  //       final productDoc =
+  //           await _firestore.collection('products').doc(productId).get();
+
+  //       if (!productDoc.exists) {
+  //         continue;
+  //       }
+
+  //       final variantsSnapshot = await _firestore
+  //           .collection('variants')
+  //           .where('productId', isEqualTo: productId)
+  //           .get();
+
+  //       List<Variant> variants = [];
+  //       for (var variantDoc in variantsSnapshot.docs) {
+  //         final sizeStocksSnapshot = await _firestore
+  //             .collection('sizes_and_stocks')
+  //             .where('variantId', isEqualTo: variantDoc.id)
+  //             .get();
+
+  //         final sizeStocks = sizeStocksSnapshot.docs
+  //             .map((doc) => SizeStockModel.fromMap(doc.data(), doc.id))
+  //             .toList();
+
+  //         variants.add(
+  //             Variant.fromMap(variantDoc.data(), variantDoc.id, sizeStocks));
+  //       }
+
+  //       String? brandName;
+  //       final brandDoc = await _firestore
+  //           .collection('brands')
+  //           .doc(productDoc.data()?['brandId'])
+  //           .get();
+
+  //       brandName = brandDoc.data()?['name'] ??
+  //           brandDoc.data()?['brandName'] ??
+  //           brandDoc.data()?['title'] ??
+  //           'Unknown Brand';
+
+  //       final product =
+  //           ProductModel.fromFirestore(productDoc, variants, brandName);
+  //       favoriteProducts.add(product);
+  //     } catch (productFetchError) {
+  //       print('Error fetching product $productId: $productFetchError');
+  //     }
+  //   }
+
+  //   return favoriteProducts;
+  // }
 
   Future<List<ProductModel>> searchFavorites(
       String query, List<ProductModel> products) async {

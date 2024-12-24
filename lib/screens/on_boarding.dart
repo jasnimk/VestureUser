@@ -22,10 +22,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _markOnboardingComplete() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Explicitly set onboarding as complete
-    await prefs.setBool('onboarding_complete', true);
+      await prefs.setBool('onboarding_complete', true);
 
-    // Explicitly navigate to LoginScreen and clear previous routes
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen()),

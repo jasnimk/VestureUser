@@ -15,8 +15,7 @@ import 'package:vesture_firebase_user/widgets/sheet_sort.dart';
 class CategoryProductDetailsScreen extends StatefulWidget {
   final String categoryId;
 
-  const CategoryProductDetailsScreen({Key? key, required this.categoryId})
-      : super(key: key);
+  const CategoryProductDetailsScreen({super.key, required this.categoryId});
 
   @override
   _CategoryProductDetailsScreenState createState() =>

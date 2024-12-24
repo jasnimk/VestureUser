@@ -1,16 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_state.dart';
 import 'package:vesture_firebase_user/repository/checkout_repo.dart';
 
 class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CheckoutRepository _checkoutRepository;
+  final CartBloc _cartBloc;
 
-  CheckoutBloc({required CheckoutRepository checkoutRepository})
+  CheckoutBloc(
+      {required CheckoutRepository checkoutRepository,
+      required CartBloc cartBloc})
       : _checkoutRepository = checkoutRepository,
+        _cartBloc = cartBloc,
         super(CheckoutInitial()) {
     on<InitiateCheckoutEvent>(_onInitiateCheckout);
-    on<ProcessRazorpayPaymentEvent>(_onProcessRazorpayPayment);
   }
 
   Future<void> _onInitiateCheckout(
@@ -36,21 +40,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
           items: event.items,
         );
       }
-    } catch (e) {
-      emit(CheckoutError(e.toString()));
-    }
-  }
-
-  Future<void> _onProcessRazorpayPayment(
-    ProcessRazorpayPaymentEvent event,
-    Emitter<CheckoutState> emit,
-  ) async {
-    try {
-      emit(CheckoutLoading());
-      final orderId = await _checkoutRepository.finalizeRazorpayPayment(
-        paymentId: event.paymentId,
-      );
-      emit(CheckoutSuccess(orderId));
     } catch (e) {
       emit(CheckoutError(e.toString()));
     }

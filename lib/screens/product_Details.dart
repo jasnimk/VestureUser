@@ -10,11 +10,11 @@ import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_state.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
-import 'package:vesture_firebase_user/screens/cart_page.dart';
 import 'package:vesture_firebase_user/utilities/color_utility.dart';
 import 'package:vesture_firebase_user/widgets/bottom_sheet_size.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
+import 'package:vesture_firebase_user/widgets/price_display.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class ProductDetailsPage extends StatelessWidget {
@@ -143,24 +143,29 @@ class ProductDetailsPage extends StatelessWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      product.productName,
-                                      style: headerStyling(),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          product.productName,
+                                          style: headerStyling(),
+                                        ),
+                                        Text(
+                                          product.brandName ?? 'Unknown Brand',
+                                          style: subHeaderStyling(),
+                                        ),
+                                        const Text(
+                                          '⭐⭐⭐⭐⭐(5)',
+                                          style: TextStyle(fontSize: 10),
+                                        )
+                                      ],
                                     ),
-                                    Text(
-                                      '₹ ${selectedVariant.sizeStocks.first.baseprice.toStringAsFixed(2)}',
-                                      style: headerStyling(fontSize: 18),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child:
+                                          ProductPriceDisplay(product: product),
                                     ),
                                   ],
                                 ),
-                                Text(
-                                  product.brandName ?? 'Unknown Brand',
-                                  style: subHeaderStyling(),
-                                ),
-                                const Text(
-                                  '⭐⭐⭐⭐⭐(5)',
-                                  style: TextStyle(fontSize: 10),
-                                )
                               ],
                             ),
                           ),
@@ -262,10 +267,6 @@ class ProductDetailsPage extends StatelessWidget {
                                             quantity: 1,
                                           ),
                                         );
-                                    // Navigator.pop(context);
-
-                                    // // Show success dialog with navigation
-                                    // _showCustomDialog(context);
                                   },
                                   isCartAction: true,
                                 );

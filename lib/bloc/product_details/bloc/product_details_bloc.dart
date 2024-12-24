@@ -64,8 +64,13 @@ class ProductDetailsBloc
         return;
       }
 
+      double offer = await ProductModel.calculateCategoryOffer(
+          _firestore,
+          productDoc.data()?['parentCategoryId'],
+          productDoc.data()?['subCategoryId']);
+
       final product =
-          ProductModel.fromFirestore(productDoc, variants, brandName);
+          ProductModel.fromFirestore(productDoc, variants, brandName, offer);
 
       Variant? selectedVariant;
       SizeStockModel? selectedSize;

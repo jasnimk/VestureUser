@@ -6,7 +6,6 @@ import 'package:vesture_firebase_user/bloc/bloc/categories_state.dart';
 import 'package:vesture_firebase_user/screens/shopping_page.dart';
 import 'package:vesture_firebase_user/screens/categories_shop.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
-import 'package:vesture_firebase_user/widgets/custom_search.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/search_sec.dart';

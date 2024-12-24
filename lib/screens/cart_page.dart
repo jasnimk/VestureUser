@@ -17,7 +17,6 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  bool _isloading = false;
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -38,6 +37,8 @@ class _CartScreenState extends State<CartScreen> {
             }
 
             if (state is CartLoadedState) {
+              // List items = state.items;
+              // print(items);
               if (state.items.isEmpty) {
                 return buildEmptyStateWidget(
                     message: 'No products found!',

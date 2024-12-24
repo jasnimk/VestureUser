@@ -104,30 +104,45 @@ class _CartItemCardState extends State<CartItemCard> {
               ],
             ),
             const SizedBox(height: 8),
-            // Price and quantity controls in a row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Price information
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '₹${widget.cartItem.discountedPrice.toStringAsFixed(2)}',
+                      '₹${widget.cartItem.price.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      '₹${widget.cartItem.effectivePrice.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    if (widget.cartItem.percentDiscount > 0)
-                      Text(
-                        '₹${widget.cartItem.price.toStringAsFixed(2)}',
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${widget.cartItem.categoryOffer.toStringAsFixed(0)}% OFF',
                         style: TextStyle(
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                          color: Colors.green.shade700,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 6),
+                    //if (widget.cartItem.percentDiscount > 0)
                   ],
                 ),
                 // Quantity controls

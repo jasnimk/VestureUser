@@ -44,15 +44,12 @@ buildProfileListTile(
   return ListTile(
     title: Text(
       title,
-      style: styling(fontSize: 16, fontWeight: FontWeight.w600 // SemiBold
-          ),
+      style: styling(fontSize: 16, fontWeight: FontWeight.w600),
     ),
     subtitle: Text(
       subtitle,
       style: styling(
-          fontSize: 14,
-          fontWeight: FontWeight.w400, // Regular
-          color: Colors.grey),
+          fontSize: 14, fontWeight: FontWeight.w400, color: Colors.grey),
     ),
     trailing: const Icon(Icons.arrow_forward),
     onTap: onTap,
@@ -119,10 +116,10 @@ Widget customCircularProgressIndicator({Color? color, double? size}) {
 
 customDivider() {
   return Divider(
-    color: Colors.grey, // Color of the line
-    thickness: 1, // Thickness of the line
-    indent: 16, // Left indent
-    endIndent: 16, // Right indent
+    color: Colors.grey,
+    thickness: 1,
+    indent: 16,
+    endIndent: 16,
   );
 }
 
@@ -169,40 +166,3 @@ TextStyle subHeaderStyling({
     decoration: decoration,
   );
 }
-
-// customElevatedIconButton({
-//   required IconData icon,
-//   required VoidCallback onPressed,
-//   String? label,
-//   Color backgroundColor = Colors.blue,
-//   Color iconColor = Colors.white,
-//   TextStyle? lblTextStyle,
-//   double borderRadius = 8.0,
-//   EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-// }) {
-//   return ElevatedButton(
-//     width: width ?? double.infinity,
-//     onPressed: onPressed,
-//     style: ElevatedButton.styleFrom(
-//       backgroundColor: backgroundColor,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.circular(borderRadius),
-//       ),
-//       padding: padding,
-//     ),
-//     child: Row(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         Icon(icon, color: iconColor),
-//         if (label != null) ...[
-//           SizedBox(width: 8), // Spacing between icon and text
-//           Text(
-//             label,
-//             style: lblTextStyle ??
-//                 TextStyle(color: Colors.white, fontSize: 16), // Default style
-//           ),
-//         ],
-//       ],
-//     ),
-//   );
-// }

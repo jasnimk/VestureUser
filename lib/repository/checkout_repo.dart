@@ -8,24 +8,10 @@ class CheckoutRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final CartRepository _cartRepository = CartRepository();
-  // final Razorpay _razorpay = Razorpay();
 
-  CheckoutRepository() {
-    //  _initializeRazorpay();
-  }
+  CheckoutRepository() {}
 
-  void _initializeRazorpay() {
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-  }
-
-  // void _handlePaymentSuccess(PaymentSuccessResponse response) {
-  //   // Handle payment success
-  // }
-
-  // void _handlePaymentError(PaymentFailureResponse response) {
-  //   // Handle payment failure
-  // }
+  void _initializeRazorpay() {}
 
   Future<String> createOrder({
     required String addressId,
@@ -37,9 +23,7 @@ class CheckoutRepository {
     if (user == null) throw Exception('User not logged in');
 
     try {
-      // Start a transaction
       return await _firestore.runTransaction<String>((transaction) async {
-        // Convert cart items to order items
         final orderItems = items
             .map((item) => OrderItem(
                   productId: item.productId,
@@ -63,17 +47,15 @@ class CheckoutRepository {
           addressId: addressId,
           items: orderItems,
           totalAmount: totalAmount,
-          shippingCharge: 60.0, // Fixed shipping charge
+          shippingCharge: 60.0,
           paymentMethod: paymentMethod,
           paymentStatus: paymentMethod == 'cod' ? 'pending' : 'paid',
           orderStatus: 'pending',
           createdAt: DateTime.now(),
         );
 
-        // Set the order document
         transaction.set(orderRef, order.toMap());
 
-        // Clear the cart
         await _cartRepository.clearCart();
 
         return orderRef.id;
@@ -90,20 +72,7 @@ class CheckoutRepository {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    var options = {
-      'key': 'YOUR_RAZORPAY_KEY',
-      'amount': (amount * 100).toInt(), // Amount in smallest currency unit
-      'name': 'Vesture Store',
-      'description': '${items.length} items',
-      'prefill': {
-        'contact': user.phoneNumber ?? '',
-        'email': user.email ?? '',
-      }
-    };
-
-    try {
-      // _razorpay.open(options);
-    } catch (e) {
+    try {} catch (e) {
       throw Exception('Failed to initialize payment: $e');
     }
   }
@@ -111,13 +80,8 @@ class CheckoutRepository {
   Future<String> finalizeRazorpayPayment({
     required String paymentId,
   }) async {
-    // Verify payment with Razorpay
-    // Create order after successful payment
-    // Return order ID
     throw UnimplementedError();
   }
 
-  void dispose() {
-    // _razorpay.clear();
-  }
+  void dispose() {}
 }

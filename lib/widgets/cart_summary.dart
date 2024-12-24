@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_event.dart';
+import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
+import 'package:vesture_firebase_user/repository/cart_repo.dart';
+import 'package:vesture_firebase_user/repository/checkout_repo.dart';
 import 'package:vesture_firebase_user/screens/checkout_screen.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 
@@ -54,9 +60,23 @@ class CartSummaryWidget extends StatelessWidget {
                   context: context,
                   text: 'Proceed to Checkout',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CheckoutScreen()),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(
+                              value: BlocProvider.of<CartBloc>(context)
+                                ..add(LoadCartEvent()),
+                            ),
+                            BlocProvider(
+                              create: (context) => CheckoutBloc(
+                                  cartBloc: context.read<CartBloc>(),
+                                  checkoutRepository: CheckoutRepository()),
+                            ),
+                          ],
+                          child: const CheckoutScreen(),
+                        ),
+                      ),
                     );
                   }),
               height: 50,

@@ -10,12 +10,8 @@ Future<int> getAddressCount(String userId) async {
         .collection('addresses')
         .get();
 
-    return snapshot.docs.length; // Return the number of addresses
+    return snapshot.docs.length;
   } catch (e) {
-    print('Error fetching addresses: $e');
-    return 0; // Return 0 if there's an error
+    return 0;
   }
 }
-
-// Add similar functions here for other data if needed in future
-// For example, to fetch order count, payment methods, etc.

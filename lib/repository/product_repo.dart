@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vesture_firebase_user/models/offer_model.dart';
 import 'package:vesture_firebase_user/models/product_filter.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
-import 'dart:math' show min, max;
 
 class ProductRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,7 +26,6 @@ class ProductRepository {
 
       return _mapProducts(productsSnapshot.docs);
     } catch (e) {
-      print('Error Fetching Products: $e');
       rethrow;
     }
   }
@@ -52,7 +52,6 @@ class ProductRepository {
 
       return _mapProducts(combinedDocs);
     } catch (e) {
-      print('Error Fetching Products by Category: $e');
       rethrow;
     }
   }
@@ -94,20 +93,8 @@ class ProductRepository {
 
       return _mapProducts(filteredDocs);
     } catch (e) {
-      print('Error Searching Products: $e');
       rethrow;
     }
-  }
-
-  Future<List<ProductModel>> _mapProducts(
-      List<QueryDocumentSnapshot> docs) async {
-    List<ProductModel> products = [];
-    for (var doc in docs) {
-      final variants = await _fetchVariantsWithSizeStocks(doc.id);
-      final brandName = await _fetchBrandName(doc);
-      products.add(ProductModel.fromFirestore(doc, variants, brandName));
-    }
-    return products;
   }
 
   Future<List<Variant>> _fetchVariantsWithSizeStocks(String productId) async {
@@ -133,7 +120,6 @@ class ProductRepository {
       }
       return variants;
     } catch (e) {
-      print('Error Fetching Variants: $e');
       rethrow;
     }
   }
@@ -148,7 +134,6 @@ class ProductRepository {
 
       return brandDoc.data()?['brandName'] ?? 'Unknown Brand';
     } catch (e) {
-      print('Error Fetching Brand: $e');
       return 'Unknown Brand';
     }
   }
@@ -189,13 +174,7 @@ class ProductRepository {
 
   Future<List<ProductModel>> applyFilters(
       List<ProductModel> products, ProductFilter filter) async {
-    print('Applying filters in repository');
-    print('Input products count: ${products.length}');
-
     return products.where((product) {
-      print('\nChecking product: ${product.productName}');
-
-      // Price filter
       double productMinPrice = double.infinity;
       double productMaxPrice = 0;
 
@@ -210,30 +189,21 @@ class ProductRepository {
         }
       }
 
-      print('Product price range: $productMinPrice - $productMaxPrice');
-      print(
-          'Filter price range: ${filter.priceRange.start} - ${filter.priceRange.end}');
-
       if (productMaxPrice < filter.priceRange.start ||
           productMinPrice > filter.priceRange.end) {
-        print('Failed price filter');
         return false;
       }
-
-      // Brand filter - Fixed to handle case-insensitive comparison
       if (filter.selectedBrands.isNotEmpty) {
         final productBrand = product.brandName?.toLowerCase().trim();
         final selectedBrands = filter.selectedBrands
             .map((brand) => brand.toLowerCase().trim())
             .toSet();
 
-        print('Checking brand: $productBrand against $selectedBrands');
         if (productBrand == null || !selectedBrands.contains(productBrand)) {
-          print('Failed brand filter');
           return false;
         }
       }
-// Category filter
+
       if (filter.selectedCategory.isNotEmpty &&
           filter.selectedCategory != 'All') {
         print('=== Category Filter Debug ===');
@@ -263,21 +233,7 @@ class ProductRepository {
           return false;
         }
       }
-      // // Category filter
-      // if (filter.selectedCategory.isNotEmpty &&
-      //     filter.selectedCategory != 'All') {
-      //   bool categoryMatch =
-      //       product.parentCategoryId == filter.selectedCategory ||
-      //           product.subCategoryId == filter.selectedCategory;
-      //   print(
-      //       'Checking category: ${product.parentCategoryId} or ${product.subCategoryId} against ${filter.selectedCategory}');
-      //   if (!categoryMatch) {
-      //     print('Failed category filter');
-      //     return false;
-      //   }
-      // }
 
-      // Color filter - Updated to handle case-insensitive comparison
       if (filter.selectedColors.isNotEmpty) {
         bool hasMatchingColor = false;
         for (var variant in product.variants ?? []) {
@@ -297,7 +253,6 @@ class ProductRepository {
         }
       }
 
-      // Size filter - Updated to handle case-insensitive comparison
       if (filter.selectedSizes.isNotEmpty) {
         bool hasMatchingSize = false;
         for (var variant in product.variants ?? []) {
@@ -343,4 +298,148 @@ class ProductRepository {
       selectedCategory: '',
     );
   }
+
+  Future<double> fetchCategoryOffer(
+      String? parentCategoryId, String? subCategoryId) async {
+    try {
+      print(
+          'Fetching offer for parentCategoryId: $parentCategoryId and subCategoryId: $subCategoryId');
+      final offerQuery = await FirebaseFirestore.instance
+          .collection('offers')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      double maxOffer = 0.0;
+      final now = DateTime.now();
+
+      for (var doc in offerQuery.docs) {
+        final offer = OfferModel.fromFirestore(doc);
+        print('Checking offer: ${offer.id}');
+
+        // Skip expired or future offers
+        if (!offer.validFrom.isBefore(now) || !offer.validTo.isAfter(now)) {
+          continue;
+        }
+
+        // Check for exact subcategory match first (highest priority)
+        if (subCategoryId != null && offer.subCategoryId == subCategoryId) {
+          double newOffer = offer.discount;
+          maxOffer = newOffer > maxOffer ? newOffer : maxOffer;
+          print('Applied specific subcategory offer: $newOffer%');
+          continue; // Skip other checks if we found a subcategory match
+        }
+
+        // Check for parent category offer only if no subcategory offer was found
+        // and only if the offer is explicitly for the parent category with no subcategory
+        if (parentCategoryId != null &&
+            offer.parentCategoryId == parentCategoryId &&
+            offer.subCategoryId == null) {
+          double newOffer = offer.discount;
+          maxOffer = newOffer > maxOffer ? newOffer : maxOffer;
+          print('Applied parent category offer: $newOffer%');
+        }
+      }
+
+      print('Final offer determined: $maxOffer%');
+      return maxOffer;
+    } catch (e) {
+      print('Error fetching offer: $e');
+      return 0.0;
+    }
+  }
+
+  Future<List<ProductModel>> _mapProducts(
+      List<QueryDocumentSnapshot> docs) async {
+    List<ProductModel> products = [];
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      print('\nProcessing product: ${data['productName']}');
+      print('Parent Category ID: ${data['parentCategoryId']}');
+      print('Sub Category ID: ${data['subCategoryId']}');
+
+      final variants = await _fetchVariantsWithSizeStocks(doc.id);
+      final brandName = await _fetchBrandName(doc);
+
+      // Fetch the specific offer for this product using the correct category and subcategory
+      double finalOffer = await fetchCategoryOffer(
+          data['parentCategoryId'], data['subCategoryId']);
+
+      print('Final offer applied: $finalOffer');
+      products.add(
+          ProductModel.fromFirestore(doc, variants, brandName, finalOffer));
+    }
+
+    return products;
+  }
+
+  // Future<double> _fetchCategoryOffer(String categoryId) async {
+  //   try {
+  //     print('Fetching offer for categoryId: $categoryId'); // Debug log
+
+  //     final offerQuery = await _firestore
+  //         .collection('offers')
+  //         .where('isActive', isEqualTo: true)
+  //         .where('offerType', isEqualTo: 'Category')
+  //         .get();
+
+  //     print('Found ${offerQuery.docs.length} active offers'); // Debug log
+
+  //     double maxOffer = 0.0;
+  //     final now = DateTime.now();
+
+  //     for (var doc in offerQuery.docs) {
+  //       final offer = OfferModel.fromFirestore(doc);
+  //       print('Checking offer: ${offer.id}'); // Debug log
+  //       print(
+  //           'Category IDs - Parent: ${offer.parentCategoryId}, Sub: ${offer.subCategoryId}');
+  //       print('Checking against category: $categoryId');
+
+  //       if ((offer.parentCategoryId == categoryId ||
+  //               offer.subCategoryId == categoryId) &&
+  //           offer.validFrom.isBefore(now) &&
+  //           offer.validTo.isAfter(now)) {
+  //         print(
+  //             'Found matching offer with discount: ${offer.discount}'); // Debug log
+  //         if (offer.discount > maxOffer) {
+  //           maxOffer = offer.discount;
+  //         }
+  //       }
+  //     }
+
+  //     print('Final offer for category $categoryId: $maxOffer'); // Debug log
+  //     return maxOffer;
+  //   } catch (e) {
+  //     print('Error fetching offer: $e');
+  //     return 0.0;
+  //   }
+  // }
+
+  // Future<List<ProductModel>> _mapProducts(
+  //     List<QueryDocumentSnapshot> docs) async {
+  //   List<ProductModel> products = [];
+
+  //   for (var doc in docs) {
+  //     final data = doc.data() as Map<String, dynamic>;
+  //     print('\nProcessing product: ${data['productName']}');
+  //     print('Parent Category ID: ${data['parentCategoryId']}');
+  //     print('Sub Category ID: ${data['subCategoryId']}');
+
+  //     final variants = await _fetchVariantsWithSizeStocks(doc.id);
+  //     final brandName = await _fetchBrandName(doc);
+
+  //     // Calculate offer using the enhanced method
+  //     double finalOffer = await ProductModel.calculateCategoryOffer(
+  //       _firestore,
+  //       data['parentCategoryId'],
+  //       data['subCategoryId'],
+  //     );
+
+  //     print('Final offer applied: $finalOffer');
+  //     products.add(
+  //         ProductModel.fromFirestore(doc, variants, brandName, finalOffer));
+  //   }
+
+  //   return products;
+  // }
 }

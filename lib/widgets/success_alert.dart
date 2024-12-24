@@ -8,7 +8,7 @@ void showSuccessAlert({
   required String message,
   required String actionLabel,
   required VoidCallback actionCallback,
-  bool isCartAction = false, // Add this flag to check context
+  bool isCartAction = false,
 }) {
   showDialog(
     context: context,
@@ -30,7 +30,6 @@ void showSuccessAlert({
               Navigator.of(dialogContext).pop();
             },
           ),
-          // If the action is Cart, add a button to navigate to CartPage
           if (isCartAction)
             TextButton(
               child: const Text(
@@ -44,7 +43,6 @@ void showSuccessAlert({
                 );
               },
             ),
-          // If the action is Favorite, add a button to navigate to FavoritesPage
           if (!isCartAction)
             TextButton(
               child: const Text(

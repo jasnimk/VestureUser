@@ -146,6 +146,90 @@ class CartRepository {
     return sizeStockDoc.data()?['stock'] as int? ?? 0;
   }
 
+  // Future<void> addToCart(ProductModel product, Variant selectedVariant,
+  //     SizeStockModel selectedSize, int quantity) async {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user == null) {
+  //     throw Exception('Please login to add items to cart');
+  //   }
+
+  //   try {
+  //     await _firestore.runTransaction((transaction) async {
+  //       // Get the current stock level
+  //       final sizeStockDoc = await transaction.get(
+  //           _firestore.collection('sizes_and_stocks').doc(selectedSize.id));
+
+  //       if (!sizeStockDoc.exists) {
+  //         throw Exception('Size not found');
+  //       }
+
+  //       final currentStock = sizeStockDoc.data()?['stock'] ?? 0;
+
+  //       // Check cart for existing items
+  //       final cartSnapshot = await _firestore
+  //           .collection('users')
+  //           .doc(user.uid)
+  //           .collection('cart')
+  //           .where('productId', isEqualTo: product.id)
+  //           .where('variantId', isEqualTo: selectedVariant.id)
+  //           .where('sizeId', isEqualTo: selectedSize.id)
+  //           .get();
+
+  //       if (cartSnapshot.docs.isNotEmpty) {
+  //         // Update existing cart item
+  //         final existingDoc = cartSnapshot.docs.first;
+  //         final existingQuantity = existingDoc.data()['quantity'] as int;
+  //         final newQuantity = existingQuantity + quantity;
+
+  //         // Verify stock availability for the additional quantity only
+  //         if (currentStock < quantity) {
+  //           throw Exception('Not enough stock available');
+  //         }
+
+  //         // Update stock
+  //         transaction.update(
+  //             _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
+  //             {'stock': currentStock - quantity});
+
+  //         // Update cart item quantity
+  //         transaction.update(existingDoc.reference, {'quantity': newQuantity});
+  //       } else {
+  //         // Create new cart item if it doesn't exist
+  //         if (currentStock < quantity) {
+  //           throw Exception('Not enough stock available');
+  //         }
+
+  //         // Update stock
+  //         transaction.update(
+  //             _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
+  //             {'stock': currentStock - quantity});
+
+  //         // Create new cart item
+  //         final cartRef = _firestore
+  //             .collection('users')
+  //             .doc(user.uid)
+  //             .collection('cart')
+  //             .doc();
+
+  //         transaction.set(cartRef, {
+  //           'productId': product.id,
+  //           'variantId': selectedVariant.id,
+  //           'sizeId': selectedSize.id,
+  //           'quantity': quantity,
+  //           'price': selectedSize.baseprice,
+  //           'productName': product.productName,
+  //           'color': selectedVariant.color,
+  //           'size': selectedSize.size,
+  //           'imageUrl': selectedVariant.imageUrls.first,
+  //           'addedAt': FieldValue.serverTimestamp(),
+  //         });
+  //       }
+  //     });
+  //   } catch (e) {
+  //     throw Exception('Error adding to cart: $e');
+  //   }
+  // }
+
   Future<void> addToCart(ProductModel product, Variant selectedVariant,
       SizeStockModel selectedSize, int quantity) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -165,6 +249,13 @@ class CartRepository {
 
         final currentStock = sizeStockDoc.data()?['stock'] ?? 0;
 
+        // Calculate category offer before adding to cart
+        double categoryOffer = await CartItem.calculateCategoryOffer(
+          _firestore,
+          product.parentCategoryId,
+          product.subCategoryId,
+        );
+
         // Check cart for existing items
         final cartSnapshot = await _firestore
             .collection('users')
@@ -181,7 +272,6 @@ class CartRepository {
           final existingQuantity = existingDoc.data()['quantity'] as int;
           final newQuantity = existingQuantity + quantity;
 
-          // Verify stock availability for the additional quantity only
           if (currentStock < quantity) {
             throw Exception('Not enough stock available');
           }
@@ -191,10 +281,16 @@ class CartRepository {
               _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
               {'stock': currentStock - quantity});
 
-          // Update cart item quantity
-          transaction.update(existingDoc.reference, {'quantity': newQuantity});
+          // Update cart item quantity and ensure discounts are saved
+          transaction.update(existingDoc.reference, {
+            'quantity': newQuantity,
+            'categoryOffer': categoryOffer,
+            'percentDiscount': selectedSize.percentDiscount,
+            'parentCategoryId': product.parentCategoryId,
+            'subCategoryId': product.subCategoryId,
+          });
         } else {
-          // Create new cart item if it doesn't exist
+          // Create new cart item
           if (currentStock < quantity) {
             throw Exception('Not enough stock available');
           }
@@ -204,7 +300,7 @@ class CartRepository {
               _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
               {'stock': currentStock - quantity});
 
-          // Create new cart item
+          // Create new cart item with all discount information
           final cartRef = _firestore
               .collection('users')
               .doc(user.uid)
@@ -220,8 +316,13 @@ class CartRepository {
             'productName': product.productName,
             'color': selectedVariant.color,
             'size': selectedSize.size,
-            'imageUrl': selectedVariant.imageUrls.first,
+            'imageUrl': selectedVariant.imageUrls.isNotEmpty
+                ? selectedVariant.imageUrls.first
+                : '',
             'percentDiscount': selectedSize.percentDiscount,
+            'categoryOffer': categoryOffer,
+            'parentCategoryId': product.parentCategoryId,
+            'subCategoryId': product.subCategoryId,
             'addedAt': FieldValue.serverTimestamp(),
           });
         }

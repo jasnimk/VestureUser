@@ -1,14 +1,12 @@
 // profile_list_tile.dart
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class ProfileListTile extends StatelessWidget {
   final String title;
   final String subtitle;
-  final Future<int>
-      futureData; // Any future data (e.g., address count, order count)
+  final Future<int> futureData;
   final VoidCallback onTap;
 
   const ProfileListTile({

@@ -49,11 +49,6 @@ void main() async {
         BlocProvider(
           create: (_) => ThemeCubit(),
         ),
-        // BlocProvider(
-        //   create: (_) => FilterCubit(FilterRepository()),
-        //   // child: FilterScreen(
-        //   //     initialFilter: ProductFilter(priceRange: RangeValues(0, 100000))),
-        // ),
         BlocProvider(
           create: (_) => ProductDetailsBloc(cartRepository: CartRepository()),
         ),
