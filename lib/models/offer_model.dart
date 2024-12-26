@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OfferModel {
   String? id;
-  String offerType; // 'Category' or 'Product'
+  String offerType;
   String? parentCategoryId;
   String? subCategoryId;
   String? productId;

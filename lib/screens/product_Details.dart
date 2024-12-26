@@ -275,6 +275,9 @@ class ProductDetailsPage extends StatelessWidget {
                               height: 50,
                             ),
                           ),
+                          SizedBox(
+                            height: 50,
+                          )
                         ],
                       ),
                     );
@@ -301,12 +304,18 @@ class ProductDetailsPage extends StatelessWidget {
           child: PageView.builder(
             itemCount: imageUrls.length,
             itemBuilder: (context, index) {
-              return Image.memory(
-                base64Decode(imageUrls[index]),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.image_not_supported);
-                },
+              return InteractiveViewer(
+                panEnabled: true, // Enable dragging
+                boundaryMargin: EdgeInsets.all(20), // Set margins for panning
+                minScale: 0.1, // Minimum zoom
+                maxScale: 3.0, // Maximum zoom
+                child: Image.memory(
+                  base64Decode(imageUrls[index]),
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, error, st) {
+                    return const Icon(Icons.image_not_supported);
+                  },
+                ),
               );
             },
           ),

@@ -112,31 +112,43 @@ class CartRepository {
   Future<void> clearCart() async {
     if (currentUser == null) throw Exception('User not logged in');
 
-    await _firestore.runTransaction((transaction) async {
-      final cartSnapshot = await _firestore
+    try {
+      // First get all cart items
+      final cartRef = _firestore
           .collection('users')
           .doc(currentUser!.uid)
-          .collection('cart')
-          .get();
+          .collection('cart');
 
-      for (var doc in cartSnapshot.docs) {
-        final quantity = doc.data()['quantity'] as int;
-        final sizeId = doc.data()['sizeId'] as String;
+      final cartSnapshot = await cartRef.get();
 
-        final sizeStockDoc = await transaction
-            .get(_firestore.collection('sizes_and_stocks').doc(sizeId));
-
-        if (sizeStockDoc.exists) {
-          final currentStock = sizeStockDoc.data()?['stock'] as int;
-
-          transaction.update(
-              _firestore.collection('sizes_and_stocks').doc(sizeId),
-              {'stock': currentStock + quantity});
-        }
-
-        transaction.delete(doc.reference);
+      // If cart is empty, return early
+      if (cartSnapshot.docs.isEmpty) {
+        return;
       }
-    });
+
+      // Create a batch for multiple writes
+      final batch = _firestore.batch();
+
+      // Process each cart item
+      for (var doc in cartSnapshot.docs) {
+        final data = doc.data();
+        final quantity = data['quantity'] as int;
+        final sizeId = data['sizeId'] as String;
+
+        // Add delete operation to batch
+        batch.delete(doc.reference);
+
+        // Add stock update operation to batch
+        final sizeRef = _firestore.collection('sizes_and_stocks').doc(sizeId);
+        batch.update(sizeRef, {'stock': FieldValue.increment(quantity)});
+      }
+
+      // Commit all operations
+      await batch.commit();
+    } catch (e) {
+      print('Error clearing cart: $e');
+      throw Exception('Failed to clear cart: $e');
+    }
   }
 
   Future<int> getAvailableStock(String sizeId) async {
@@ -145,90 +157,6 @@ class CartRepository {
     if (!sizeStockDoc.exists) return 0;
     return sizeStockDoc.data()?['stock'] as int? ?? 0;
   }
-
-  // Future<void> addToCart(ProductModel product, Variant selectedVariant,
-  //     SizeStockModel selectedSize, int quantity) async {
-  //   final user = FirebaseAuth.instance.currentUser;
-  //   if (user == null) {
-  //     throw Exception('Please login to add items to cart');
-  //   }
-
-  //   try {
-  //     await _firestore.runTransaction((transaction) async {
-  //       // Get the current stock level
-  //       final sizeStockDoc = await transaction.get(
-  //           _firestore.collection('sizes_and_stocks').doc(selectedSize.id));
-
-  //       if (!sizeStockDoc.exists) {
-  //         throw Exception('Size not found');
-  //       }
-
-  //       final currentStock = sizeStockDoc.data()?['stock'] ?? 0;
-
-  //       // Check cart for existing items
-  //       final cartSnapshot = await _firestore
-  //           .collection('users')
-  //           .doc(user.uid)
-  //           .collection('cart')
-  //           .where('productId', isEqualTo: product.id)
-  //           .where('variantId', isEqualTo: selectedVariant.id)
-  //           .where('sizeId', isEqualTo: selectedSize.id)
-  //           .get();
-
-  //       if (cartSnapshot.docs.isNotEmpty) {
-  //         // Update existing cart item
-  //         final existingDoc = cartSnapshot.docs.first;
-  //         final existingQuantity = existingDoc.data()['quantity'] as int;
-  //         final newQuantity = existingQuantity + quantity;
-
-  //         // Verify stock availability for the additional quantity only
-  //         if (currentStock < quantity) {
-  //           throw Exception('Not enough stock available');
-  //         }
-
-  //         // Update stock
-  //         transaction.update(
-  //             _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
-  //             {'stock': currentStock - quantity});
-
-  //         // Update cart item quantity
-  //         transaction.update(existingDoc.reference, {'quantity': newQuantity});
-  //       } else {
-  //         // Create new cart item if it doesn't exist
-  //         if (currentStock < quantity) {
-  //           throw Exception('Not enough stock available');
-  //         }
-
-  //         // Update stock
-  //         transaction.update(
-  //             _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
-  //             {'stock': currentStock - quantity});
-
-  //         // Create new cart item
-  //         final cartRef = _firestore
-  //             .collection('users')
-  //             .doc(user.uid)
-  //             .collection('cart')
-  //             .doc();
-
-  //         transaction.set(cartRef, {
-  //           'productId': product.id,
-  //           'variantId': selectedVariant.id,
-  //           'sizeId': selectedSize.id,
-  //           'quantity': quantity,
-  //           'price': selectedSize.baseprice,
-  //           'productName': product.productName,
-  //           'color': selectedVariant.color,
-  //           'size': selectedSize.size,
-  //           'imageUrl': selectedVariant.imageUrls.first,
-  //           'addedAt': FieldValue.serverTimestamp(),
-  //         });
-  //       }
-  //     });
-  //   } catch (e) {
-  //     throw Exception('Error adding to cart: $e');
-  //   }
-  // }
 
   Future<void> addToCart(ProductModel product, Variant selectedVariant,
       SizeStockModel selectedSize, int quantity) async {
@@ -239,7 +167,6 @@ class CartRepository {
 
     try {
       await _firestore.runTransaction((transaction) async {
-        // Get the current stock level
         final sizeStockDoc = await transaction.get(
             _firestore.collection('sizes_and_stocks').doc(selectedSize.id));
 
@@ -249,14 +176,12 @@ class CartRepository {
 
         final currentStock = sizeStockDoc.data()?['stock'] ?? 0;
 
-        // Calculate category offer before adding to cart
         double categoryOffer = await CartItem.calculateCategoryOffer(
           _firestore,
           product.parentCategoryId,
           product.subCategoryId,
         );
 
-        // Check cart for existing items
         final cartSnapshot = await _firestore
             .collection('users')
             .doc(user.uid)
@@ -267,7 +192,6 @@ class CartRepository {
             .get();
 
         if (cartSnapshot.docs.isNotEmpty) {
-          // Update existing cart item
           final existingDoc = cartSnapshot.docs.first;
           final existingQuantity = existingDoc.data()['quantity'] as int;
           final newQuantity = existingQuantity + quantity;
@@ -276,12 +200,10 @@ class CartRepository {
             throw Exception('Not enough stock available');
           }
 
-          // Update stock
           transaction.update(
               _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
               {'stock': currentStock - quantity});
 
-          // Update cart item quantity and ensure discounts are saved
           transaction.update(existingDoc.reference, {
             'quantity': newQuantity,
             'categoryOffer': categoryOffer,
@@ -290,17 +212,14 @@ class CartRepository {
             'subCategoryId': product.subCategoryId,
           });
         } else {
-          // Create new cart item
           if (currentStock < quantity) {
             throw Exception('Not enough stock available');
           }
 
-          // Update stock
           transaction.update(
               _firestore.collection('sizes_and_stocks').doc(selectedSize.id),
               {'stock': currentStock - quantity});
 
-          // Create new cart item with all discount information
           final cartRef = _firestore
               .collection('users')
               .doc(user.uid)

@@ -535,3 +535,92 @@
 //     );
 //   }
 // }
+
+  // Future<List<ProductModel>> applyFilters(
+  //     List<ProductModel> products, ProductFilter filter) async {
+  //   return products.where((product) {
+  //     double productMinPrice = double.infinity;
+  //     double productMaxPrice = 0;
+
+  //     for (var variant in product.variants ?? []) {
+  //       for (var sizeStock in variant.sizeStocks) {
+  //         if (sizeStock.baseprice < productMinPrice) {
+  //           productMinPrice = sizeStock.baseprice;
+  //         }
+  //         if (sizeStock.baseprice > productMaxPrice) {
+  //           productMaxPrice = sizeStock.baseprice;
+  //         }
+  //       }
+  //     }
+
+  //     if (productMaxPrice < filter.priceRange.start ||
+  //         productMinPrice > filter.priceRange.end) {
+  //       return false;
+  //     }
+  //     if (filter.selectedBrands.isNotEmpty) {
+  //       final productBrand = product.brandName?.toLowerCase().trim();
+  //       final selectedBrands = filter.selectedBrands
+  //           .map((brand) => brand.toLowerCase().trim())
+  //           .toSet();
+
+  //       if (productBrand == null || !selectedBrands.contains(productBrand)) {
+  //         return false;
+  //       }
+  //     }
+
+  //     if (filter.selectedCategory.isNotEmpty &&
+  //         filter.selectedCategory != 'All') {
+
+  //       String selectedCategory = filter.selectedCategory.toLowerCase().trim();
+  //       String parentCategory =
+  //           (product.parentCategoryId ?? '').toLowerCase().trim();
+  //       String subCategory = (product.subCategoryId ?? '').toLowerCase().trim();
+
+  //       bool categoryMatch = parentCategory == selectedCategory ||
+  //           subCategory == selectedCategory;
+
+  //       if (!categoryMatch) {
+  //         return false;
+  //       }
+  //     }
+
+  //     if (filter.selectedColors.isNotEmpty) {
+  //       bool hasMatchingColor = false;
+  //       for (var variant in product.variants ?? []) {
+  //         final variantColor = variant.color.toLowerCase().trim();
+  //         final selectedColors =
+  //             filter.selectedColors.map((c) => c.toLowerCase().trim()).toSet();
+
+  //          if (selectedColors.contains(variantColor)) {
+  //           hasMatchingColor = true;
+  //           break;
+  //         }
+  //       }
+  //       if (!hasMatchingColor) {
+  //          return false;
+  //       }
+  //     }
+
+  //     if (filter.selectedSizes.isNotEmpty) {
+  //       bool hasMatchingSize = false;
+  //       for (var variant in product.variants ?? []) {
+  //         for (var sizeStock in variant.sizeStocks) {
+  //           final stockSize = sizeStock.size.toLowerCase().trim();
+  //           final selectedSizes =
+  //               filter.selectedSizes.map((s) => s.toLowerCase().trim()).toSet();
+
+  //             if (selectedSizes.contains(stockSize)) {
+  //             hasMatchingSize = true;
+  //             break;
+  //           }
+  //         }
+  //         if (hasMatchingSize) break;
+  //       }
+  //       if (!hasMatchingSize) {
+  //         return false;
+  //       }
+  //     }
+
+  //     return true;
+  //   }).toList();
+  // }

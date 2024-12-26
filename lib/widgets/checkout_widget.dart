@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_state.dart';
+import 'package:vesture_firebase_user/models/cart_item.dart';
+import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class EnhancedOrderSummary extends StatelessWidget {
   final double shippingCharge;
@@ -16,40 +18,7 @@ class EnhancedOrderSummary extends StatelessWidget {
     return BlocBuilder<CartBloc, CartState>(
       builder: (context, state) {
         if (state is CartLoadedState) {
-          double subtotal = 0;
-          double totalDiscount = 0;
-
-// Suggested fixed version:
-          for (var item in state.items) {
-            // Ensure price and quantity are non-null and greater than 0
-            if (item.price <= 0 || item.quantity <= 0) {
-              print(
-                  'Warning: Invalid price or quantity for item: ${item.product?.id}');
-              continue;
-            }
-
-            // Calculate base price for this item
-            double itemBasePrice = item.price * item.quantity;
-            print(
-                'Item: ${item.product?.id}, Price: ${item.price}, Quantity: ${item.quantity}, Base Price: $itemBasePrice');
-
-            // Add to subtotal
-            subtotal += itemBasePrice;
-
-            // Calculate discount if applicable
-            double offerPercentage = item.product?.offer ?? 0;
-            if (offerPercentage > 0) {
-              double itemDiscount = (itemBasePrice * offerPercentage / 100);
-              totalDiscount += itemDiscount;
-              print('Applied discount: $itemDiscount (${offerPercentage}%)');
-            }
-          }
-
-// Add debug print after calculations
-          print('Final Subtotal: $subtotal');
-          print('Total Discount: $totalDiscount');
-          print('Shipping Charge: $shippingCharge');
-          print('Final Amount: ${subtotal - totalDiscount + shippingCharge}');
+          final prices = _calculatePrices(state.items);
 
           return Container(
             padding: const EdgeInsets.all(16),
@@ -60,9 +29,9 @@ class EnhancedOrderSummary extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Order Summary',
-                  style: TextStyle(
+                  style: headerStyling(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -75,103 +44,24 @@ class EnhancedOrderSummary extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = state.items[index];
                     final basePrice = item.price * item.quantity;
-                    subtotal += basePrice;
+                    final maxDiscountPercent = _calculateMaxDiscount(item);
+                    final effectivePrice =
+                        basePrice * (1 - maxDiscountPercent / 100);
 
-                    final effectivePrice = item.effectivePrice * item.quantity;
-                    final itemDiscount = basePrice - effectivePrice;
-                    totalDiscount += itemDiscount;
-
-                    double maxDiscountPercent = [
-                      item.percentDiscount,
-                      item.categoryOffer,
-                      item.product?.offer ?? 0.0
-                    ].reduce((a, b) => a > b ? a : b);
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.productName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Size: ${item.size} | Color: ${item.color} | Qty: ${item.quantity}',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '₹${basePrice.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      decoration: TextDecoration.lineThrough,
-                                      color: Colors.grey.shade600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                    '₹${effectivePrice.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (maxDiscountPercent > 0) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '${maxDiscountPercent.toStringAsFixed(0)}% OFF',
-                                style: TextStyle(
-                                  color: Colors.green.shade700,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
+                    return _buildItemRow(
+                        item, basePrice, effectivePrice, maxDiscountPercent);
                   },
                 ),
                 const Divider(height: 24),
-                _buildPriceRow('Subtotal', subtotal),
-                if (totalDiscount > 0)
-                  _buildPriceRow('Total Discount', -totalDiscount,
+                _buildPriceRow('Subtotal', prices.subtotal),
+                if (prices.totalDiscount > 0)
+                  _buildPriceRow('Total Discount', -prices.totalDiscount,
                       isDiscount: true),
                 _buildPriceRow('Shipping Charge', shippingCharge),
                 const Divider(height: 24),
                 _buildPriceRow(
                   'Total Amount',
-                  subtotal + shippingCharge,
+                  prices.subtotal - prices.totalDiscount + shippingCharge,
                   isTotal: true,
                 ),
               ],
@@ -180,6 +70,103 @@ class EnhancedOrderSummary extends StatelessWidget {
         }
         return const Center(child: CircularProgressIndicator());
       },
+    );
+  }
+
+  ({double subtotal, double totalDiscount}) _calculatePrices(
+      List<CartItem> items) {
+    double subtotal = 0;
+    double totalDiscount = 0;
+
+    for (var item in items) {
+      if (item.price <= 0 || item.quantity <= 0) {
+        continue;
+      }
+
+      final basePrice = item.price * item.quantity;
+      subtotal += basePrice;
+
+      final maxDiscountPercent = _calculateMaxDiscount(item);
+      final itemDiscount = basePrice * (maxDiscountPercent / 100);
+      totalDiscount += itemDiscount;
+    }
+
+    return (subtotal: subtotal, totalDiscount: totalDiscount);
+  }
+
+  double _calculateMaxDiscount(CartItem item) {
+    return [
+      item.percentDiscount,
+      item.categoryOffer,
+      item.product?.offer ?? 0.0
+    ].reduce((a, b) => a > b ? a : b);
+  }
+
+  Widget _buildItemRow(CartItem item, double basePrice, double effectivePrice,
+      double discountPercent) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.productName, style: styling()),
+                    Text(
+                      'Size: ${item.size} | Color: ${item.color} | Qty: ${item.quantity}',
+                      style: styling(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹${basePrice.toStringAsFixed(2)}',
+                    style: styling(
+                      decoration: TextDecoration.lineThrough,
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text('₹${effectivePrice.toStringAsFixed(2)}',
+                      style: styling()),
+                ],
+              ),
+            ],
+          ),
+          if (discountPercent > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.green.shade100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '${discountPercent.toStringAsFixed(0)}% OFF',
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -196,7 +183,7 @@ class EnhancedOrderSummary extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: styling(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
               fontSize: isTotal ? 16 : 14,
             ),
@@ -205,7 +192,7 @@ class EnhancedOrderSummary extends StatelessWidget {
             isDiscount
                 ? '-₹${amount.abs().toStringAsFixed(2)}'
                 : '₹${amount.toStringAsFixed(2)}',
-            style: TextStyle(
+            style: styling(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
               fontSize: isTotal ? 16 : 14,
               color: isDiscount ? Colors.green.shade700 : null,

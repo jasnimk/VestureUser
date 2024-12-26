@@ -65,9 +65,6 @@ class ProductModel {
         ? productVariants.first.sizeStocks.first.baseprice
         : 0.0;
 
-    print(
-        'Creating ProductModel for ${data['productName']} with offer: $offer'); // Debug print
-
     return ProductModel(
       id: doc.id,
       productName: data['productName'] ?? '',
@@ -120,7 +117,6 @@ class ProductModel {
 
       return maxOffer;
     } catch (e) {
-      print('Error calculating category offer: $e');
       return 0.0;
     }
   }

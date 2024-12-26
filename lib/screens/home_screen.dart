@@ -4,7 +4,7 @@ import 'package:vesture_firebase_user/screens/list_categories.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();

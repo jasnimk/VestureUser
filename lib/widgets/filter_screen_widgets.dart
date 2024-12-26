@@ -301,8 +301,17 @@ class FilterWidgets {
             child: customButton(
                 context: context,
                 text: 'Clear',
-                onPressed: () => onFilterChanged(initialFilter),
-                // width: 100,
+                onPressed: () {
+                  final clearedFilter = ProductFilter(
+                    priceRange: RangeValues(0, 100000),
+                    // priceRange: initialFilter.priceRange,
+                    selectedColors: {},
+                    selectedSizes: {},
+                    selectedBrands: {},
+                    selectedCategory: '',
+                  );
+                  onFilterChanged(clearedFilter);
+                },
                 height: 50),
           ),
           Expanded(

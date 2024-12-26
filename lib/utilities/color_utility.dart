@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class ColorUtil {
-  // Mapping of color names to Color objects
   static final Map<String, Color> colorNameToColor = {
     "Red": Colors.red,
     "Pink": Colors.pink,
@@ -26,7 +25,6 @@ class ColorUtil {
     "White": Colors.white,
   };
 
-  // Hex to color name mapping
   static final Map<String, String> hexToColorName = {
     "#FF0000": "Red",
     "#F44336": "Red",
@@ -52,17 +50,14 @@ class ColorUtil {
     "#FFFFFF": "White",
   };
 
-  // Convert hex to color name
   static String colorNameFromHex(String hex) {
     return hexToColorName[hex.toUpperCase()] ?? "Unknown";
   }
 
-  // Get Color object from color name
   static Color getColorFromName(String colorName) {
     return colorNameToColor[colorName] ?? Colors.grey;
   }
 
-  // Get Color object directly from hex
   static Color getColorFromHex(String hex) {
     return Color(int.parse(
         hex.startsWith('#') ? '0xFF${hex.substring(1)}' : '0xFF$hex'));

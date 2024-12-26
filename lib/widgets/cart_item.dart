@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:vesture_firebase_user/models/cart_item.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
+import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class CartItemCard extends StatefulWidget {
   final CartItem cartItem;
@@ -51,7 +53,6 @@ class _CartItemCardState extends State<CartItemCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image with fixed size
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.memory(
@@ -76,7 +77,7 @@ class _CartItemCardState extends State<CartItemCard> {
                     children: [
                       Text(
                         widget.cartItem.productName,
-                        style: const TextStyle(
+                        style: headerStyling(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -86,18 +87,17 @@ class _CartItemCardState extends State<CartItemCard> {
                       const SizedBox(height: 4),
                       Text(
                         'Color: ${widget.cartItem.color}',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: styling(color: Colors.grey[600]),
                       ),
                       Text(
                         'Size: ${widget.cartItem.size}',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: styling(color: Colors.grey[600]),
                       ),
                     ],
                   ),
                 ),
-                // Delete button
                 IconButton(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const Icon(FontAwesomeIcons.trash),
                   onPressed: widget.onRemove,
                   color: Colors.red,
                 ),
@@ -112,7 +112,7 @@ class _CartItemCardState extends State<CartItemCard> {
                   children: [
                     Text(
                       '₹${widget.cartItem.price.toStringAsFixed(2)}',
-                      style: TextStyle(
+                      style: styling(
                         decoration: TextDecoration.lineThrough,
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -120,7 +120,7 @@ class _CartItemCardState extends State<CartItemCard> {
                     ),
                     Text(
                       '₹${widget.cartItem.effectivePrice.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: styling(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -134,7 +134,7 @@ class _CartItemCardState extends State<CartItemCard> {
                       ),
                       child: Text(
                         '${widget.cartItem.categoryOffer.toStringAsFixed(0)}% OFF',
-                        style: TextStyle(
+                        style: styling(
                           color: Colors.green.shade700,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -142,10 +142,8 @@ class _CartItemCardState extends State<CartItemCard> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    //if (widget.cartItem.percentDiscount > 0)
                   ],
                 ),
-                // Quantity controls
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
@@ -171,7 +169,7 @@ class _CartItemCardState extends State<CartItemCard> {
                         child: Text(
                           '${widget.cartItem.quantity}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: headerStyling(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

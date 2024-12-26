@@ -18,7 +18,7 @@ TextStyle styling({
   String fontFamily = 'Poppins-Regular',
   double fontSize = 14.0,
   FontWeight fontWeight = FontWeight.normal,
-  Color color = const Color(0xFF000000),
+  Color? color = const Color(0xFF000000),
   FontStyle fontStyle = FontStyle.normal,
   double letterSpacing = 0.0,
   double wordSpacing = 0.0,

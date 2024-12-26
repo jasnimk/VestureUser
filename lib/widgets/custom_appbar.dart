@@ -5,7 +5,7 @@ AppBar buildCustomAppBar({
   required BuildContext context,
   required String title,
   bool showBackButton = true,
-  List<Widget>? actions, // Change this line to List<Widget>?
+  List<Widget>? actions,
   TextStyle? titleTextStyle,
   IconData? leadingIcon,
   VoidCallback? onLeadingPressed,
@@ -16,14 +16,6 @@ AppBar buildCustomAppBar({
     backgroundColor: backgroundColor,
     elevation: 0,
     centerTitle: false,
-    // leading: showBackButton
-    //     ? IconButton(
-    //         icon: Icon(leadingIcon ?? Icons.arrow_back),
-    //         onPressed: onLeadingPressed,
-    //         color: Theme.of(context).textTheme.bodyMedium!.color,
-    //         iconSize: 24,
-    //       )
-    //     : null,
     actions: actions,
     title: Row(
       mainAxisAlignment: MainAxisAlignment.start,

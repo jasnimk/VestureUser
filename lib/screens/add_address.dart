@@ -5,6 +5,7 @@ import 'package:vesture_firebase_user/bloc/address/bloc/adress_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_event.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_state.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
+import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/textform.dart';
 
 class AddAddressForm extends StatefulWidget {
@@ -78,23 +79,12 @@ class _AddAddressFormState extends State<AddAddressForm> {
   Widget build(BuildContext context) {
     return BlocListener<AddressBloc, AddressState>(
         listener: (context, state) {
-          if (state is AddressSubmitting) {
-            // Show loading dialog
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (BuildContext context) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            );
+          if (state is AddressLoading) {
+            return buildLoadingIndicator(context: context);
           } else if (state is AddressSubmitted) {
-            // Close loading dialog and navigate back
-            Navigator.of(context).pop(); // Close loading dialog
-            Navigator.of(context).pop(); // Go back to address listing
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
 
-            // Show success message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Address saved successfully'),
@@ -102,12 +92,10 @@ class _AddAddressFormState extends State<AddAddressForm> {
               ),
             );
           } else if (state is AddressError) {
-            // Close loading dialog if open
             if (Navigator.canPop(context)) {
               Navigator.of(context).pop();
             }
 
-            // Show error message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -193,9 +181,7 @@ class _AddAddressFormState extends State<AddAddressForm> {
                           child: customButton(
                             context: context,
                             text: 'Use My Location',
-                            onPressed: () {
-                              // Logic to fetch current location
-                            },
+                            onPressed: () {},
                             icon: FontAwesomeIcons.locationCrosshairs,
                             height: 50,
                             fontSize: 13,
@@ -243,7 +229,6 @@ class _AddAddressFormState extends State<AddAddressForm> {
                           };
 
                           if (widget.isEditing && widget.addressData != null) {
-                            // Update existing address
                             context.read<AddressBloc>().add(
                                   UpdateAddressEvent(
                                     widget.addressData!['id'],
@@ -251,7 +236,6 @@ class _AddAddressFormState extends State<AddAddressForm> {
                                   ),
                                 );
                           } else {
-                            // Add new address
                             context
                                 .read<AddressBloc>()
                                 .add(AddAddressEvent(addressData));

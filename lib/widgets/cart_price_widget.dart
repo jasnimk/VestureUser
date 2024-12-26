@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class CartItemPriceDisplay extends StatelessWidget {
   final double originalPrice;
@@ -21,7 +22,7 @@ class CartItemPriceDisplay extends StatelessWidget {
         originalPrice == effectivePrice) {
       return Text(
         '₹${originalPrice.toStringAsFixed(2)}',
-        style: const TextStyle(
+        style: styling(
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
@@ -37,7 +38,7 @@ class CartItemPriceDisplay extends StatelessWidget {
           children: [
             Text(
               '₹${effectivePrice.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: styling(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,

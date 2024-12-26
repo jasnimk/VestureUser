@@ -21,18 +21,18 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
       SearchFavoritesEvent event, Emitter<FavoriteState> emit) async {
     try {
       if (event.query.isEmpty) {
-        add(FetchFavoritesEvent()); // Reset to all favorites if query is empty
+        add(FetchFavoritesEvent());
         return;
       }
 
-      emit(FavoriteLoadingState()); // Add loading state
+      emit(FavoriteLoadingState());
       final searchResults = await _favoriteRepository.searchFavorites(
         event.query,
         event.products,
       );
       emit(FavoritesLoadedState(products: searchResults));
     } catch (e) {
-      print('Error searching favorites: $e'); // Add error logging
+      print('Error searching favorites: $e');
       emit(FavoriteErrorState(errorMessage: e.toString()));
     }
   }
@@ -50,7 +50,6 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
 
       emit(FavoriteStatusState(isFavorite: isFavorite));
     } catch (e) {
-      print('Error checking favorite status: $e');
       emit(FavoriteErrorState(errorMessage: e.toString()));
     }
   }
@@ -78,7 +77,6 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
 
       emit(FavoriteStatusState(isFavorite: isFavorite));
     } catch (e) {
-      print('Favorite Toggle Error: $e');
       emit(FavoriteErrorState(errorMessage: e.toString()));
     }
   }
@@ -92,7 +90,6 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
 
       emit(FavoritesLoadedState(products: favoriteProducts));
     } catch (e) {
-      print('Error fetching favorites: $e');
       emit(FavoriteErrorState(errorMessage: e.toString()));
     }
   }

@@ -45,6 +45,13 @@ class _CartScreenState extends State<CartScreen> {
                     subMessage: 'Start Shopping now');
               }
 
+              double totalDiscount = state.items.fold(
+                  0.0,
+                  (sum, item) =>
+                      sum + (item.price - item.effectivePrice) * item.quantity);
+              double actualTotal = state.items
+                  .fold(0.0, (sum, item) => sum + (item.price) * item.quantity);
+
               return Column(
                 children: [
                   Expanded(
@@ -80,7 +87,10 @@ class _CartScreenState extends State<CartScreen> {
                       },
                     ),
                   ),
-                  CartSummaryWidget(totalAmount: state.totalAmount),
+                  CartSummaryWidget(
+                      totalAmount: state.totalAmount,
+                      totalDiscount: totalDiscount,
+                      actualTotal: actualTotal),
                 ],
               );
             }

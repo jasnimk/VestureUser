@@ -8,7 +8,7 @@ class BubblingFAB extends StatefulWidget {
   final double scaleStart;
   final double scaleEnd;
   final Duration duration;
-  final String? tooltip; // Change to String type for tooltip text
+  final String? tooltip;
 
   const BubblingFAB({
     Key? key,
@@ -18,7 +18,7 @@ class BubblingFAB extends StatefulWidget {
     this.iconColor = Colors.white,
     this.scaleStart = 1.0,
     this.scaleEnd = 1.2,
-    this.tooltip, // Tooltip is now a String
+    this.tooltip,
     this.duration = const Duration(seconds: 2),
   }) : super(key: key);
 
@@ -57,17 +57,16 @@ class _BubblingFABState extends State<BubblingFAB>
       animation: _animation,
       builder: (context, child) {
         return Tooltip(
-          // Wrap the FAB with Tooltip
-          message: widget.tooltip ?? 'No tooltip', // Show the tooltip text
+          message: widget.tooltip ?? 'No tooltip',
           child: Transform.scale(
             scale: _animation.value,
             child: FloatingActionButton(
               onPressed: widget.onPressed,
               backgroundColor: widget.backgroundColor,
-              child: Icon(widget.icon, color: widget.iconColor),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(1), // Rounded corners
+                borderRadius: BorderRadius.circular(1),
               ),
+              child: Icon(widget.icon, color: widget.iconColor),
             ),
           ),
         );

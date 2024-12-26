@@ -8,7 +8,7 @@ import 'package:vesture_firebase_user/screens/profile_page.dart';
 
 class MainScreen extends StatefulWidget {
   final String userId;
-  const MainScreen({Key? key, required this.userId}) : super(key: key);
+  const MainScreen({super.key, required this.userId});
 
   @override
   _MainScreenState createState() => _MainScreenState();

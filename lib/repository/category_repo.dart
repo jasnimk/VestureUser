@@ -15,7 +15,6 @@ class CategoryRepository {
           .map((doc) => CategoryModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error Fetching Categories: $e');
       rethrow;
     }
   }
@@ -32,7 +31,6 @@ class CategoryRepository {
         return categoryName.contains(searchQuery);
       }).toList();
     } catch (e) {
-      print('Search Categories Error: $e');
       rethrow;
     }
   }
@@ -47,7 +45,6 @@ class CategoryRepository {
       }
       return null;
     } catch (e) {
-      print('Error Fetching Category by ID: $e');
       rethrow;
     }
   }
@@ -64,7 +61,6 @@ class CategoryRepository {
           .map((doc) => CategoryModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error Fetching Parent Categories: $e');
       rethrow;
     }
   }
@@ -82,7 +78,6 @@ class CategoryRepository {
           .map((doc) => CategoryModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error Fetching Subcategories: $e');
       rethrow;
     }
   }

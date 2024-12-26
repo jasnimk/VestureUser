@@ -20,10 +20,15 @@ class RemoveFromCartEvent extends CartEvent {
   RemoveFromCartEvent({required this.cartItem});
 }
 
-class ClearCartEvent extends CartEvent {}
+//class ClearCartEvent extends CartEvent {}
 
 class CartUpdated extends CartEvent {
   final List<CartItem> items;
 
   CartUpdated(this.items);
+}
+
+class ClearCartEvent extends CartEvent {
+  @override
+  List<Object?> get props => [];
 }

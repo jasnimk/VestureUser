@@ -16,7 +16,6 @@ Widget customSearchField(
 }) {
   final TextEditingController _searchController = TextEditingController();
 
-
   // void _voiceSearch() {
   //   print("Voice search activated");
   // }
@@ -26,17 +25,13 @@ Widget customSearchField(
   //   print("Image search activated");
   // }
 
-
-
   void performSearch(String query) {
     query = query.trim().toLowerCase();
     print('Search Query: $query');
 
     if (isCategorySearch) {
-      // If it's a category search
       context.read<CategoryBloc>().add(SearchCategoriesEvent(query: query));
     } else {
-      // Existing product search logic
       if (query.isNotEmpty) {
         context.read<ProductBloc>().add(SearchProductsEvent(query: query));
       } else {
@@ -59,16 +54,16 @@ Widget customSearchField(
               icon: const Icon(
                 FontAwesomeIcons.microphone,
                 size: 15,
-              ), // Voice search icon
-              onPressed: (){},
+              ),
+              onPressed: () {},
               iconSize: 20,
             ),
             IconButton(
               icon: const Icon(
                 FontAwesomeIcons.camera,
                 size: 15,
-              ), // Image search icon
-              onPressed:(){},
+              ),
+              onPressed: () {},
               iconSize: 20,
             ),
           ],
@@ -77,13 +72,13 @@ Widget customSearchField(
           icon: const Icon(
             FontAwesomeIcons.magnifyingGlass,
             size: 15,
-          ), // Search icon
+          ),
           onPressed: () => performSearch(_searchController.text),
         ),
         border: const OutlineInputBorder(),
       ),
-      onChanged: performSearch, 
-      onSubmitted: performSearch, 
+      onChanged: performSearch,
+      onSubmitted: performSearch,
     ),
   );
 }

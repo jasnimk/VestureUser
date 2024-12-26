@@ -26,7 +26,6 @@ class ProductDetailsBloc
       final productDoc =
           await _firestore.collection('products').doc(event.productId).get();
 
-      // Fetch brand name
       String? brandName;
       final brandDoc = await _firestore
           .collection('brands')

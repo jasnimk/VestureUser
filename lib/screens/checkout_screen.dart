@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_state.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_state.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_state.dart';
+import 'package:vesture_firebase_user/models/cart_item.dart';
+import 'package:vesture_firebase_user/repository/stripe_repo.dart';
 import 'package:vesture_firebase_user/screens/select_address.dart';
+import 'package:vesture_firebase_user/screens/success.dart';
 import 'package:vesture_firebase_user/widgets/checkout_widget.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
+import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 import 'package:vesture_firebase_user/models/offer_model.dart';
 
@@ -26,6 +31,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPaymentMethod = 'cod';
   String? _selectedAddressId;
   final double _shippingCharge = 60.0;
+  bool _isPlacingOrder = false;
 
   @override
   void initState() {
@@ -33,6 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     context.read<AddressBloc>().add(AddressLoadEvent());
   }
 
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,33 +50,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       body: BlocListener<CheckoutBloc, CheckoutState>(
         listener: (context, state) {
           if (state is CheckoutSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Order placed successfully!')),
-            );
-            Navigator.of(context).pushReplacementNamed('/order-success');
+            setState(() => _isPlacingOrder = false);
+            // Clear the cart after successful order
+            context.read<CartBloc>().add(ClearCartEvent());
+
+            Navigator.of(context)
+                .pushReplacement(MaterialPageRoute(builder: (ctx) {
+              return SuccessScreen();
+            }));
           } else if (state is CheckoutError) {
+            setState(() => _isPlacingOrder = false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
+          } else if (state is CheckoutLoading) {
+            setState(() => _isPlacingOrder = true);
           }
         },
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAddressSection(),
-                const SizedBox(height: 24),
-                _buildPaymentMethodSection(),
-                const SizedBox(height: 24),
-                _buildOrderSummary(),
-                const SizedBox(height: 24),
-                // _buildPriceRow(label, amount)
-                // _buildOrderSummary(),
-              ],
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildAddressSection(),
+                    const SizedBox(height: 24),
+                    _buildPaymentMethodSection(),
+                    const SizedBox(height: 24),
+                    _buildOrderSummary(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (_isPlacingOrder) buildLoadingIndicator(context: context)
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomBar(),
@@ -101,9 +118,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Delivery Address',
-                      style: TextStyle(
+                      style: headerStyling(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -131,7 +148,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 if (selectedAddress.isNotEmpty) ...[
                   Text(
                     selectedAddress['name'] ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    style: styling(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -139,12 +156,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     '${selectedAddress['district']}, ${selectedAddress['city']}\n'
                     '${selectedAddress['state']} - ${selectedAddress['pincode']}\n'
                     'Phone: ${selectedAddress['phone']}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: styling(color: Colors.grey),
                   ),
                 ] else
-                  const Text(
+                  Text(
                     'No address selected. Please add an address.',
-                    style: TextStyle(color: Colors.red),
+                    style: subHeaderStyling(color: Colors.red),
                   ),
               ],
             ),
@@ -182,10 +199,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           RadioListTile(
             title: Text(
-              'Razorpay',
+              'Pay Online',
               style: styling(),
             ),
-            value: 'razorpay',
+            value: 'stripe',
             groupValue: _selectedPaymentMethod,
             onChanged: (value) {
               setState(() {
@@ -214,7 +231,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: customButton(
         context: context,
         text: 'Place Order',
-        onPressed: _handlePlaceOrder,
+        onPressed: () {
+          if (!_isPlacingOrder) {
+            _handlePlaceOrder();
+          }
+        },
         height: 50,
       ),
     );
@@ -225,60 +246,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _handlePlaceOrder() {
-    if (_selectedPaymentMethod != 'cod') {
+    if (_isPlacingOrder) return;
+
+    if (_selectedAddressId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Only COD is available at the moment')),
+        const SnackBar(content: Text('Please select a delivery address')),
       );
       return;
     }
 
     final cartState = context.read<CartBloc>().state;
-    if (cartState is CartLoadedState && _selectedAddressId != null) {
+    if (cartState is CartLoadedState) {
       double subtotal = 0;
       double totalDiscount = 0;
 
-// Suggested fixed version:
       for (var item in cartState.items) {
-        // Ensure price and quantity are non-null and greater than 0
         if (item.price <= 0 || item.quantity <= 0) {
-          print(
-              'Warning: Invalid price or quantity for item: ${item.product?.id}');
           continue;
         }
 
-        // Calculate base price for this item
-        double itemBasePrice = item.price * item.quantity;
-        print(
-            'Item: ${item.product?.id}, Price: ${item.price}, Quantity: ${item.quantity}, Base Price: $itemBasePrice');
+        final basePrice = item.price * item.quantity;
+        subtotal += basePrice;
 
-        // Add to subtotal
-        subtotal += itemBasePrice;
-
-        // Calculate discount if applicable
-        double offerPercentage = item.product?.offer ?? 0;
-        if (offerPercentage > 0) {
-          double itemDiscount = (itemBasePrice * offerPercentage / 100);
-          totalDiscount += itemDiscount;
-          print('Applied discount: $itemDiscount (${offerPercentage}%)');
-        }
+        final maxDiscountPercent = calculateMaxDiscount(item);
+        final itemDiscount = basePrice * (maxDiscountPercent / 100);
+        totalDiscount += itemDiscount;
       }
-
-// Add debug print after calculations
-      print('Final Subtotal: $subtotal');
-      print('Total Discount: $totalDiscount');
-      print('Shipping Charge: $_shippingCharge');
-      print('Final Amount: ${subtotal - totalDiscount + _shippingCharge}');
 
       final finalAmount = subtotal - totalDiscount + _shippingCharge;
 
-      context.read<CheckoutBloc>().add(
-            InitiateCheckoutEvent(
-              addressId: _selectedAddressId!,
-              items: cartState.items,
-              totalAmount: finalAmount,
-              paymentMethod: 'cod',
-            ),
-          );
+      if (_selectedPaymentMethod == 'cod') {
+        context.read<CheckoutBloc>().add(
+              InitiateCheckoutEvent(
+                addressId: _selectedAddressId!,
+                items: cartState.items,
+                totalAmount: finalAmount,
+                paymentMethod: 'cod',
+              ),
+            );
+      } else if (_selectedPaymentMethod == 'stripe') {
+        StripeService.instance.makePayment(amount: finalAmount);
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //       content: Text('Online payment will be available soon')),
+        // );
+      }
     }
+  }
+
+  double calculateMaxDiscount(CartItem item) {
+    return [
+      item.percentDiscount,
+      item.categoryOffer,
+      item.product?.offer ?? 0.0
+    ].reduce((a, b) => a > b ? a : b);
   }
 }

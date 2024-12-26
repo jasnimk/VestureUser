@@ -85,22 +85,17 @@ showEditNameDialog(BuildContext context, String currentName) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      // Get the current theme to adjust the dialog's appearance
       final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
       return AlertDialog(
-        backgroundColor: isDarkMode
-            ? Colors.black
-            : Colors.white, // Change background color based on theme
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(0),
         ),
         title: Text(
           'Edit Name',
           style: TextStyle(
-            color: isDarkMode
-                ? Colors.white
-                : Colors.red, // Title text color based on theme
+            color: isDarkMode ? Colors.white : Colors.red,
           ),
         ),
         content: TextField(
@@ -108,29 +103,21 @@ showEditNameDialog(BuildContext context, String currentName) {
           decoration: InputDecoration(
             labelText: 'Enter new name',
             labelStyle: TextStyle(
-              color: isDarkMode
-                  ? Colors.white70
-                  : Colors.black, // Label color based on theme
+              color: isDarkMode ? Colors.white70 : Colors.black,
             ),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: isDarkMode
-                    ? Colors.white70
-                    : Colors.black, // Input field border color based on theme
+                color: isDarkMode ? Colors.white70 : Colors.black,
               ),
             ),
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: isDarkMode
-                    ? Colors.white
-                    : Colors.blue, // Focus border color based on theme
+                color: isDarkMode ? Colors.white : Colors.blue,
               ),
             ),
           ),
           style: TextStyle(
-            color: isDarkMode
-                ? Colors.white
-                : Colors.black, // Text color in the input field based on theme
+            color: isDarkMode ? Colors.white : Colors.black,
           ),
         ),
         actions: [
@@ -141,9 +128,7 @@ showEditNameDialog(BuildContext context, String currentName) {
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: isDarkMode
-                    ? Colors.white
-                    : Colors.black, // Button text color based on theme
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
           ),
@@ -159,9 +144,7 @@ showEditNameDialog(BuildContext context, String currentName) {
             child: Text(
               'Save',
               style: TextStyle(
-                color: isDarkMode
-                    ? Colors.white
-                    : Colors.red, // Button text color based on theme
+                color: isDarkMode ? Colors.white : Colors.red,
               ),
             ),
           ),
@@ -193,7 +176,7 @@ showDeleteConfirmation(BuildContext context) {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
+              Navigator.of(context).pop();
             },
             child: Text('Cancel',
                 style: TextStyle(
@@ -201,12 +184,12 @@ showDeleteConfirmation(BuildContext context) {
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-              context.read<AuthBloc>().add(LogoutRequested()); // Trigger logout
+              Navigator.of(context).pop();
+              context.read<AuthBloc>().add(LogoutRequested());
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => LoginScreen()),
-              ); // Navigate to login
+              );
             },
             child: Text('Logout',
                 style: TextStyle(

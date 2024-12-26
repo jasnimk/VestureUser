@@ -25,7 +25,6 @@ class _ShoppingPageState extends State<ShoppingPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize products and filters
     context.read<ProductBloc>().add(FetchProductsEvent());
     context.read<ProductBloc>().add(InitializeFiltersEvent());
   }

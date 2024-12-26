@@ -19,7 +19,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
     on<SortProductsEvent>(_onSortProducts);
 
-    // New filter-related event handlers
     on<InitializeFiltersEvent>(_onInitializeFilters);
     on<ApplyFiltersEvent>(_onApplyFilters);
     on<ClearFiltersEvent>(_onClearFilters);
@@ -28,7 +27,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   Future<void> _onSortProducts(
       SortProductsEvent event, Emitter<ProductState> emit) async {
     try {
-      // Use the new sortProducts method from the repository
       final sortedProducts = await _productRepository.sortProducts(
         products: event.products,
         sortOption: event.sortOption,
@@ -56,30 +54,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductErrorState(errorMessage: e.toString()));
     }
   }
-
-  // Future<void> _onApplyFilters(
-  //     ApplyFiltersEvent event, Emitter<ProductState> emit) async {
-  //   try {
-  //     emit(ProductLoadingState());
-
-  //     if (_originalProducts.isEmpty) {
-  //       _originalProducts = await _productRepository.fetchProducts();
-  //     }
-
-  //     _currentFilter = event.filter;
-  //     final filteredProducts = await _productRepository.applyFilters(
-  //       _originalProducts,
-  //       event.filter,
-  //     );
-
-  //     emit(ProductLoadedState(
-  //       products: filteredProducts,
-  //       filter: _currentFilter,
-  //     ));
-  //   } catch (e) {
-  //     emit(ProductErrorState(errorMessage: e.toString()));
-  //   }
-  // }
 
   Future<void> _onClearFilters(
       ClearFiltersEvent event, Emitter<ProductState> emit) async {
@@ -111,11 +85,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     try {
       emit(ProductLoadingState());
       final products = await _productRepository.fetchProducts();
-      print('Fetched products count: ${products.length}'); // Debug print
-      _originalProducts = List.from(products); // Make a copy of the products
+
+      _originalProducts = List.from(products);
       emit(ProductLoadedState(products: products));
     } catch (e) {
-      print('Error fetching products: $e'); // Debug print
       emit(ProductErrorState(errorMessage: e.toString()));
     }
   }
@@ -123,10 +96,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   Future<void> _onApplyFilters(
       ApplyFiltersEvent event, Emitter<ProductState> emit) async {
     try {
-      print(
-          'Original products before filtering: ${_originalProducts.length}'); // Debug print
-
-      // If _originalProducts is empty, try to fetch products first
       if (_originalProducts.isEmpty) {
         final products = await _productRepository.fetchProducts();
         _originalProducts = List.from(products);
@@ -137,15 +106,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         event.filter,
       );
 
-      print(
-          'Filtered products count: ${filteredProducts.length}'); // Debug print
-
       emit(ProductLoadedState(
         products: filteredProducts,
         filter: event.filter,
       ));
     } catch (e) {
-      print('Error applying filters: $e'); // Debug print
       emit(ProductErrorState(errorMessage: e.toString()));
     }
   }

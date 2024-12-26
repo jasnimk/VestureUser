@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_state.dart';
@@ -45,15 +47,21 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   Future<void> _onRemoveFromCart(
       RemoveFromCartEvent event, Emitter<CartState> emit) async {
     try {
+      log('remove funcyion');
       emit(CartLoadingState());
-      await Future.delayed(Duration(milliseconds: 200));
+      //await Future.delayed(Duration(milliseconds: 200));
 
       await cartRepository.removeCartItem(
         cartItemId: event.cartItem.id,
         sizeId: event.cartItem.sizeId,
       );
-
-      add(LoadCartEvent());
+      final items = await cartRepository.fetchCartItems();
+      final totalAmount = items.fold(
+        0.0,
+        (sum, item) => sum + (item.effectivePrice * (item.quantity)),
+      );
+      emit(CartLoadedState(items: items, totalAmount: totalAmount));
+      //add(LoadCartEvent());
     } catch (e) {
       emit(CartErrorState(message: e.toString()));
     }

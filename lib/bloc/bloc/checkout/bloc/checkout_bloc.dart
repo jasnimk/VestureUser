@@ -8,10 +8,10 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CheckoutRepository _checkoutRepository;
   final CartBloc _cartBloc;
 
-  CheckoutBloc(
-      {required CheckoutRepository checkoutRepository,
-      required CartBloc cartBloc})
-      : _checkoutRepository = checkoutRepository,
+  CheckoutBloc({
+    required CheckoutRepository checkoutRepository,
+    required CartBloc cartBloc,
+  })  : _checkoutRepository = checkoutRepository,
         _cartBloc = cartBloc,
         super(CheckoutInitial()) {
     on<InitiateCheckoutEvent>(_onInitiateCheckout);
@@ -32,13 +32,9 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
           paymentMethod: 'cod',
         );
         emit(CheckoutSuccess(orderId));
-      } else if (event.paymentMethod == 'razorpay') {
+      } else if (event.paymentMethod == 'stripe') {
         emit(PaymentProcessing());
-        // Initialize Razorpay payment
-        await _checkoutRepository.initializeRazorpayPayment(
-          amount: event.totalAmount,
-          items: event.items,
-        );
+        // Stripe implementation will go here later
       }
     } catch (e) {
       emit(CheckoutError(e.toString()));

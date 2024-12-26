@@ -21,8 +21,6 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
-        print('Auth Status: ${state.status}');
-
         if (state.status == AuthStatus.authenticated) {
           Navigator.pushReplacement(
             context,
@@ -35,7 +33,7 @@ class LoginScreen extends StatelessWidget {
           CustomSnackBar.show(
             context,
             message: state.errorMessage ?? 'Login Failed',
-              textColor: Colors.white, 
+            textColor: Colors.white,
           );
         }
       },

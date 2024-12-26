@@ -3,7 +3,7 @@ import 'package:vesture_firebase_user/bloc/bloc/categories_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/categories_state.dart';
 import 'package:vesture_firebase_user/models/category_model.dart';
 
-import 'package:vesture_firebase_user/repository/category_repo.dart'; // Add this import
+import 'package:vesture_firebase_user/repository/category_repo.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final CategoryRepository _categoryRepository;
@@ -18,7 +18,6 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   @override
   void onTransition(Transition<CategoryEvent, CategoryState> transition) {
-    print('CategoryBloc Transition: $transition');
     super.onTransition(transition);
   }
 
@@ -29,14 +28,12 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
       _allCategories = await _categoryRepository.fetchCategories();
 
-      print('Loaded Categories Count: ${_allCategories.length}');
-      _allCategories.forEach((category) {
-        print('Category Name: ${category.name}, ID: ${category.id}');
-      });
+      // _allCategories.forEach((category) {
+
+      // });
 
       emit(CategoryLoadedState(categories: _allCategories));
     } catch (e) {
-      print('Error Fetching Categories: $e');
       emit(CategoryErrorState(errorMessage: e.toString()));
     }
   }
@@ -49,12 +46,8 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       }
 
       final query = event.query.toLowerCase().trim();
-      print('Debug: Search Query Received - "$query"');
-      print('Debug: Total Categories Before Search - ${_allCategories.length}');
 
       final searchResults = await _categoryRepository.searchCategories(query);
-
-      print('Debug: Search Results Count - ${searchResults.length}');
 
       if (searchResults.isEmpty) {
         emit(CategoryLoadedState(categories: _allCategories));
@@ -62,7 +55,6 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
         emit(CategorySearchState(searchResults: searchResults));
       }
     } catch (e) {
-      print('Search Error: $e');
       emit(CategoryErrorState(errorMessage: e.toString()));
     }
   }

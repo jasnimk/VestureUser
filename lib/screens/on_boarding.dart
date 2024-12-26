@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vesture_firebase_user/screens/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _markOnboardingComplete() async {
     final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setBool('onboarding_complete', true);
+    await prefs.setBool('onboarding_complete', true);
 
     Navigator.pushAndRemoveUntil(
       context,

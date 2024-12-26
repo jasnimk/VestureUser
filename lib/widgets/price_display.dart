@@ -14,11 +14,6 @@ class ProductPriceDisplay extends StatelessWidget {
     final originalPrice = product.getDefaultPrice();
     final discountedPrice = product.effectivePrice;
 
-    print('Displaying prices for ${product.productName}:');
-    print('Original Price: $originalPrice');
-    print('Offer: ${product.offer}%');
-    print('Discounted Price: $discountedPrice');
-
     if (originalPrice <= 0 ||
         product.offer <= 0 ||
         originalPrice == discountedPrice) {

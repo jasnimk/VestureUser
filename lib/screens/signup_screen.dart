@@ -34,12 +34,11 @@ class SignupScreen extends StatelessWidget {
             context,
             message: 'Sign up failed, Try again with valid credentials!',
             //backgroundColor: Colors.green, // Custom background color
-            textColor: Colors.white, // Custom text color
+            textColor: Colors.white,
           );
         }
       },
       builder: (context, state) {
-        // If loading, return a full-screen loading indicator
         if (state.status == AuthStatus.loading) {
           return Scaffold(
             body: Center(
@@ -51,8 +50,6 @@ class SignupScreen extends StatelessWidget {
             )),
           );
         }
-
-        // Normal signup screen UI
 
         return Scaffold(
           appBar: buildCustomAppBar(

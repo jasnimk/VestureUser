@@ -72,7 +72,7 @@ buildProductGridItem({
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\₹${defaultPrice.toStringAsFixed(2)}',
+                    '₹${defaultPrice.toStringAsFixed(2)}',
                     style: styling(
                       fontFamily: 'Poppins-Regular',
                       fontSize: 12,
@@ -115,7 +115,7 @@ buildProductGridView({
 
 buildLoadingIndicator({
   required BuildContext context,
-  SpinkitType type = SpinkitType.fadingCube,
+  SpinkitType type = SpinkitType.pulse,
   Color color = Colors.red,
   double size = 60.0,
 }) {

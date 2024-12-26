@@ -17,7 +17,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
   Future<void> _addAddressEvent(
       AddAddressEvent event, Emitter<AddressState> emit) async {
     try {
-      emit(AddressSubmitting());
+      emit(AddressLoading());
       await _addressRepository.addAddress(userId, event.addressData);
       emit(AddressSubmitted());
       add(AddressLoadEvent());
@@ -40,7 +40,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
   Future<void> _updateAddressEvent(
       UpdateAddressEvent event, Emitter<AddressState> emit) async {
     try {
-      emit(AddressUpdating());
+      emit(AddressLoading());
       await _addressRepository.updateAddress(
           userId, event.addressId, event.addressData);
       add(AddressLoadEvent());
@@ -52,7 +52,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
   Future<void> _deleteAddressEvent(
       DeleteAddressEvent event, Emitter<AddressState> emit) async {
     try {
-      emit(AddressDeleting());
+      emit(AddressLoading());
       await _addressRepository.deleteAddress(userId, event.addressId);
       emit(AddressDeleted());
       add(AddressLoadEvent());
