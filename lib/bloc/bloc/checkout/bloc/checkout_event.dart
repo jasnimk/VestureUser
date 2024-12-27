@@ -33,3 +33,8 @@ class ProcessRazorpayPaymentEvent extends CheckoutEvent {
   @override
   List<Object?> get props => [paymentId];
 }
+
+class StripePaymentSuccessEvent extends CheckoutEvent {
+  final String paymentIntentId;
+  StripePaymentSuccessEvent(this.paymentIntentId);
+}

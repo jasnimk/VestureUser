@@ -1,4 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
 import 'package:vesture_firebase_user/utilities/keysApi.dart';
 
 class StripeService {
@@ -6,10 +11,21 @@ class StripeService {
 
   static final StripeService instance = StripeService._();
 
-  Future<void> makePayment({required double amount}) async {
+  Future<void> makePayment({
+    required double amount,
+    required BuildContext context,
+  }) async {
     // Fixed: Removed extra amount field and added parameter
     try {
-      String? result = await _createPaymentIntent(amount.toInt(), "usd");
+      String? paymentIntentClientSecret =
+          await _createPaymentIntent(amount.toInt(), "usd");
+      if (paymentIntentClientSecret == null) return;
+      await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: paymentIntentClientSecret,
+        merchantDisplayName: 'user',
+      ));
+      await _processPayment(context, paymentIntentClientSecret);
     } catch (e) {
       print(e);
     }
@@ -29,8 +45,8 @@ class StripeService {
           }));
 
       if (response.data != null) {
-        print(response.data);
-        return response.data;
+        // print(response.data);
+        return response.data['client_secret'];
       }
       return null;
     } catch (e) {
@@ -43,4 +59,32 @@ class StripeService {
     final calculatedAmount = amount * 100;
     return calculatedAmount.toString();
   }
+
+  Future<void> _processPayment(
+    BuildContext context,
+    String paymentIntentClientSecret,
+  ) async {
+    try {
+      await Stripe.instance.presentPaymentSheet();
+
+      // Extract payment intent ID from client secret
+      final paymentIntentId = paymentIntentClientSecret.split('_secret')[0];
+
+      // Notify the bloc that payment was successful
+      context.read<CheckoutBloc>().add(
+            StripePaymentSuccessEvent(paymentIntentId),
+          );
+    } catch (e) {
+      print(e);
+      throw Exception('Payment failed: ${e.toString()}');
+    }
+  }
+
+  // Future<void> _processPayment() async {
+  //   try {
+  //     await Stripe.instance.presentPaymentSheet();
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
 }

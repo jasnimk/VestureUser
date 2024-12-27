@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_bloc.dart';
 import 'package:vesture_firebase_user/bloc/authentication/authentication_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/categories_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/userprofile_bloc.dart';
@@ -18,13 +20,17 @@ import 'package:vesture_firebase_user/repository/address_repo.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
 import 'package:vesture_firebase_user/repository/category_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
+import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/repository/product_repo.dart';
 import 'package:vesture_firebase_user/screens/splash_screen.dart';
 import 'package:vesture_firebase_user/themes/theme.dart';
+import 'package:vesture_firebase_user/utilities/keysApi.dart';
 import 'package:vesture_firebase_user/utilities/nav_service.dart';
 
 void main() async {
+  // await _setup();
   WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey = stripePublishableKey;
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -64,12 +70,17 @@ void main() async {
         BlocProvider(
           create: (_) => CartBloc(cartRepository: CartRepository()),
         ),
-        BlocProvider(create: (_) => AddressBloc(userId!, AddressRepository()))
+        BlocProvider(create: (_) => AddressBloc(userId!, AddressRepository())),
+        BlocProvider(create: (_) => OrdersBloc(OrdersRepository()))
       ],
       child: MyApp(),
     ),
   );
 }
+
+// Future<void> _setup() async {
+
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);

@@ -18,7 +18,6 @@ import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
-import 'package:vesture_firebase_user/models/offer_model.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -51,19 +50,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         listener: (context, state) {
           if (state is CheckoutSuccess) {
             setState(() => _isPlacingOrder = false);
-            // Clear the cart after successful order
             context.read<CartBloc>().add(ClearCartEvent());
-
-            Navigator.of(context)
-                .pushReplacement(MaterialPageRoute(builder: (ctx) {
-              return SuccessScreen();
-            }));
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (ctx) => SuccessScreen()),
+            );
           } else if (state is CheckoutError) {
             setState(() => _isPlacingOrder = false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
           } else if (state is CheckoutLoading) {
+            setState(() => _isPlacingOrder = true);
+          } else if (state is PaymentProcessing) {
             setState(() => _isPlacingOrder = true);
           }
         },
@@ -245,7 +243,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return EnhancedOrderSummary(shippingCharge: _shippingCharge);
   }
 
-  void _handlePlaceOrder() {
+  void _handlePlaceOrder() async {
     if (_isPlacingOrder) return;
 
     if (_selectedAddressId == null) {
@@ -285,11 +283,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'stripe') {
-        StripeService.instance.makePayment(amount: finalAmount);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(
-        //       content: Text('Online payment will be available soon')),
-        // );
+        context.read<CheckoutBloc>().add(InitiateCheckoutEvent(
+              addressId: _selectedAddressId!,
+              paymentMethod: 'stripe',
+              items: cartState.items,
+              totalAmount: finalAmount,
+            ));
+
+        await StripeService.instance
+            .makePayment(amount: finalAmount, context: context);
       }
     }
   }

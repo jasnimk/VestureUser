@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:vesture_firebase_user/utilities/offer_calculator.dart';
 
 class OrderModel {
   final String id;
@@ -66,12 +67,25 @@ class OrderItem {
   final String variantId;
   final String sizeId;
   final int quantity;
-  final double price;
+  final double price; // Base price
   final double percentDiscount;
   final String productName;
   final String color;
   final String size;
   final String imageUrl;
+  // Added fields to match CartItem
+  final String? parentCategoryId;
+  final String? subCategoryId;
+  final double categoryOffer;
+  final DateTime addedAt;
+
+  double get effectivePrice {
+    double basePrice = price;
+    if (basePrice <= 0) return basePrice;
+    return OfferCalculator.calculateFinalPrice(basePrice, categoryOffer);
+  }
+
+  double get totalPrice => effectivePrice * quantity;
 
   OrderItem({
     required this.productId,
@@ -84,6 +98,10 @@ class OrderItem {
     required this.color,
     required this.size,
     required this.imageUrl,
+    this.parentCategoryId,
+    this.subCategoryId,
+    required this.categoryOffer,
+    required this.addedAt,
   });
 
   Map<String, dynamic> toMap() {
@@ -98,6 +116,10 @@ class OrderItem {
       'color': color,
       'size': size,
       'imageUrl': imageUrl,
+      'parentCategoryId': parentCategoryId,
+      'subCategoryId': subCategoryId,
+      'categoryOffer': categoryOffer,
+      'addedAt': Timestamp.fromDate(addedAt),
     };
   }
 
@@ -113,6 +135,10 @@ class OrderItem {
       color: map['color'] ?? '',
       size: map['size'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
+      parentCategoryId: map['parentCategoryId'],
+      subCategoryId: map['subCategoryId'],
+      categoryOffer: (map['categoryOffer'] as num?)?.toDouble() ?? 0.0,
+      addedAt: (map['addedAt'] as Timestamp).toDate(),
     );
   }
 }

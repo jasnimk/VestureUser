@@ -15,7 +15,38 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         _cartBloc = cartBloc,
         super(CheckoutInitial()) {
     on<InitiateCheckoutEvent>(_onInitiateCheckout);
+    on<StripePaymentSuccessEvent>(_onStripePaymentSuccess);
   }
+
+  // Future<void> _onInitiateCheckout(
+  //   InitiateCheckoutEvent event,
+  //   Emitter<CheckoutState> emit,
+  // ) async {
+  //   try {
+  //     emit(CheckoutLoading());
+
+  //     if (event.paymentMethod == 'cod') {
+  //       final orderId = await _checkoutRepository.createOrder(
+  //         addressId: event.addressId,
+  //         items: event.items,
+  //         totalAmount: event.totalAmount,
+  //         paymentMethod: 'cod',
+  //         paymentId: null,
+  //       );
+  //       emit(CheckoutSuccess(orderId));
+  //     } else if (event.paymentMethod == 'stripe') {
+  //       emit(PaymentProcessing());
+  //       // Store order details temporarily
+  //       emit(StripePaymentInitiated(
+  //         addressId: event.addressId,
+  //         items: event.items,
+  //         totalAmount: event.totalAmount,
+  //       ));
+  //     }
+  //   } catch (e) {
+  //     emit(CheckoutError(e.toString()));
+  //   }
+  // }
 
   Future<void> _onInitiateCheckout(
     InitiateCheckoutEvent event,
@@ -30,14 +61,88 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
           items: event.items,
           totalAmount: event.totalAmount,
           paymentMethod: 'cod',
+          paymentId: null,
         );
         emit(CheckoutSuccess(orderId));
       } else if (event.paymentMethod == 'stripe') {
+        // Emit PaymentProcessing state
         emit(PaymentProcessing());
-        // Stripe implementation will go here later
+        // Store order details temporarily
+        emit(StripePaymentInitiated(
+          addressId: event.addressId,
+          items: event.items,
+          totalAmount: event.totalAmount,
+        ));
+      }
+    } catch (e) {
+      emit(CheckoutError(e.toString()));
+    }
+  }
+
+  Future<void> _onStripePaymentSuccess(
+    StripePaymentSuccessEvent event,
+    Emitter<CheckoutState> emit,
+  ) async {
+    try {
+      // Store the current state before emitting loading
+      final currentState = state;
+
+      emit(CheckoutLoading());
+
+      if (currentState is StripePaymentInitiated) {
+        final orderId = await _checkoutRepository.createOrder(
+          addressId: currentState.addressId,
+          items: currentState.items,
+          totalAmount: currentState.totalAmount,
+          paymentMethod: 'stripe',
+          paymentId: event.paymentIntentId,
+        );
+
+        emit(CheckoutSuccess(orderId));
+      } else {
+        emit(CheckoutError(
+            'Invalid state transition: Payment success received before checkout initiation'));
       }
     } catch (e) {
       emit(CheckoutError(e.toString()));
     }
   }
 }
+
+// class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
+//   final CheckoutRepository _checkoutRepository;
+//   final CartBloc _cartBloc;
+
+//   CheckoutBloc({
+//     required CheckoutRepository checkoutRepository,
+//     required CartBloc cartBloc,
+//   })  : _checkoutRepository = checkoutRepository,
+//         _cartBloc = cartBloc,
+//         super(CheckoutInitial()) {
+//     on<InitiateCheckoutEvent>(_onInitiateCheckout);
+//   }
+
+//   Future<void> _onInitiateCheckout(
+//     InitiateCheckoutEvent event,
+//     Emitter<CheckoutState> emit,
+//   ) async {
+//     try {
+//       emit(CheckoutLoading());
+
+//       if (event.paymentMethod == 'cod') {
+//         final orderId = await _checkoutRepository.createOrder(
+//           addressId: event.addressId,
+//           items: event.items,
+//           totalAmount: event.totalAmount,
+//           paymentMethod: 'cod',
+//         );
+//         emit(CheckoutSuccess(orderId));
+//       } else if (event.paymentMethod == 'stripe') {
+//         emit(PaymentProcessing());
+//         // Stripe implementation will go here later
+//       }
+//     } catch (e) {
+//       emit(CheckoutError(e.toString()));
+//     }
+//   }
+// }

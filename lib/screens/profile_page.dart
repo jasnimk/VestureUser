@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -108,13 +107,12 @@ class ProfilePage extends StatelessWidget {
               subtitle: 'Already have 12 orders',
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MyOrdersPage()),
+                MaterialPageRoute(
+                    builder: (context) => const OrderListScreen()),
               ),
             ),
-         
             FutureBuilder<int>(
-              future: getAddressCount(
-                  currentUser?.uid ?? ''),
+              future: getAddressCount(currentUser?.uid ?? ''),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return buildProfileListTile(
