@@ -96,7 +96,9 @@ class _CategoryProductDetailsScreenState
                   return Expanded(
                       child: buildEmptyStateWidget(
                           message: 'No products in this category',
-                          subMessage: 'Please check back later'));
+                          subMessage: 'Please check back later',
+                          imagePath:
+                              'assets/animations/Animation - 1735366182958.json'));
                 }
 
                 return Expanded(

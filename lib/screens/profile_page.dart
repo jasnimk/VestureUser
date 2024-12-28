@@ -102,14 +102,46 @@ class ProfilePage extends StatelessWidget {
                 );
               },
             ),
-            buildProfileListTile(
-              title: 'My orders',
-              subtitle: 'Already have 12 orders',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const OrderListScreen()),
-              ),
+            FutureBuilder<int>(
+              future: getOrdersCount(currentUser?.uid ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return buildProfileListTile(
+                    title: 'Orders',
+                    subtitle: 'Loading...',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ShippingAddressesPage()),
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return buildProfileListTile(
+                    title: 'Shipping addresses',
+                    subtitle: 'Error loading addresses',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ShippingAddressesPage()),
+                    ),
+                  );
+                }
+
+                final addressCount = snapshot.data ?? 0;
+
+                return buildProfileListTile(
+                  title: 'Order History',
+                  subtitle:
+                      '$addressCount Order${addressCount != 1 ? 's' : ''}',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const OrderListScreen()),
+                  ),
+                );
+              },
             ),
             FutureBuilder<int>(
               future: getAddressCount(currentUser?.uid ?? ''),

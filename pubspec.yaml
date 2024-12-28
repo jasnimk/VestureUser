@@ -53,6 +53,10 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_stripe: ^11.3.0
   dio: ^5.7.0
+  like_button: ^2.0.5
+  flutter_rating_bar: ^4.0.1
+  timeline_tile: ^2.0.0
+  lottie: ^3.3.0
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +93,8 @@ flutter:
     - assets/Images/kids3.jpg
     - assets/Images/women7.jpg
     - assets/Images/success.png
+    - assets/animations/Animation - 1735364832916.json
+    - assets/animations/Animation - 1735366182958.json
   fonts:
     - family: Poppins-Black
       fonts:

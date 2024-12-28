@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:vesture_firebase_user/models/order_model.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
-import '../../models/order_model.dart';
 
 class EmptyOrdersView extends StatelessWidget {
   const EmptyOrdersView({super.key});
@@ -187,7 +187,7 @@ class ProductDetails extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '₹${item.price}',
+              '₹${item.originalPrice}',
               style: styling(fontWeight: FontWeight.bold),
             ),
             Text(
@@ -210,9 +210,13 @@ class ProductDetails extends StatelessWidget {
                 ),
               ),
               Text(
-                '₹${item.price - (item.price - item.effectivePrice)}',
+                '₹${item.discountAmount}',
                 style: styling(),
               )
+              // Text(
+              //   '₹${item.oriprice - (item.price - item.effectivePrice)}',
+              //   style: styling(),
+              // )
             ],
           ),
         ],
@@ -228,14 +232,14 @@ class OrderSummary extends StatelessWidget {
 
   double _calculateItemsTotal() {
     return order.items
-        .fold(0, (sum, item) => sum + (item.price * item.quantity));
+        .fold(0, (sum, item) => sum + (item.originalPrice * item.quantity));
   }
 
   double _calculateDiscount() {
     double totalDiscount = order.items.fold(
         0.0,
         (sum, item) =>
-            sum + (item.price - item.effectivePrice) * item.quantity);
+            sum + (item.originalPrice - item.discountAmount) * item.quantity);
     return totalDiscount;
   }
 
@@ -245,7 +249,11 @@ class OrderSummary extends StatelessWidget {
       spacing: 10,
       children: [
         SummaryRow(label: 'Items Total', value: '₹${_calculateItemsTotal()}'),
-        SummaryRow(label: 'Total', value: '₹${_calculateDiscount()}'),
+        SummaryRow(
+          label: 'Total Discount',
+          value: '-₹${_calculateDiscount()}',
+          isDiscount: true,
+        ),
         SummaryRow(label: 'Shipping Charge', value: '₹${order.shippingCharge}'),
         SummaryRow(
           label: 'Total Amount',
@@ -333,13 +341,14 @@ class SummaryRow extends StatelessWidget {
   final String label;
   final String value;
   final bool isTotal;
+  final bool isDiscount;
 
-  const SummaryRow({
-    super.key,
-    required this.label,
-    required this.value,
-    this.isTotal = false,
-  });
+  const SummaryRow(
+      {super.key,
+      required this.label,
+      required this.value,
+      this.isTotal = false,
+      this.isDiscount = false});
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +365,11 @@ class SummaryRow extends StatelessWidget {
         Text(
           value,
           style: styling(
-            color: isTotal ? Colors.black : Colors.grey[600],
+            color: isTotal
+                ? Colors.black
+                : isDiscount
+                    ? Colors.green
+                    : Colors.grey,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
           ),
         ),

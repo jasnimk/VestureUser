@@ -97,10 +97,11 @@ class _ShoppingPageState extends State<ShoppingPage> {
                 if (state.products.isEmpty) {
                   return Expanded(
                     child: buildEmptyStateWidget(
-                      message: _isSearching
-                          ? 'No products found matching your search'
-                          : 'No products available',
-                    ),
+                        message: _isSearching
+                            ? 'No products found matching your search'
+                            : 'No products available',
+                        imagePath:
+                            'assets/animations/Animation - 1735366182958.json'),
                   );
                 }
 

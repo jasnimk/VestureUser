@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+        type: BottomNavigationBarType.shifting,
         backgroundColor:
             Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         unselectedItemColor:
@@ -60,28 +60,55 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.house),
+            icon: _buildCustomIcon(FontAwesomeIcons.house, 0),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.cartShopping),
+            icon: _buildCustomIcon(FontAwesomeIcons.cartShopping, 1),
             label: 'Shop',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.bagShopping),
+            icon: _buildCustomIcon(FontAwesomeIcons.bagShopping, 2),
             label: 'Cart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.heart),
+            icon: _buildCustomIcon(FontAwesomeIcons.heart, 3),
             label: 'Favorites',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user),
+            icon: _buildCustomIcon(FontAwesomeIcons.user, 4),
             label: 'Profile',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCustomIcon(IconData iconData, int index) {
+    bool isSelected = _currentIndex == index;
+
+    double scale = isSelected ? 1.2 : 1.0;
+    Color iconColor = isSelected ? Colors.white : Colors.black;
+    Color containerColor =
+        isSelected ? Color.fromRGBO(196, 28, 13, 0.829) : Colors.transparent;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: containerColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 300),
+        scale: scale,
+        child: Icon(
+          iconData,
+          size: 12,
+          color: iconColor,
+        ),
       ),
     );
   }

@@ -1,8 +1,102 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
+import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_bloc.dart';
+import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_event.dart';
+import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_state.dart';
+import 'package:vesture_firebase_user/repository/fav_repository.dart';
 import 'package:vesture_firebase_user/screens/product_Details.dart';
+import 'package:vesture_firebase_user/widgets/product_like_button.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
+
+// buildProductGridItem({
+//   required BuildContext context,
+//   required dynamic product,
+//   VoidCallback? onTap,
+// }) {
+//   final defaultImages = product.getDefaultImages();
+//   final defaultPrice = product.getDefaultPrice();
+
+//   return GestureDetector(
+//     onTap: onTap ??
+//         () {
+//           Navigator.push(
+//               context,
+//               MaterialPageRoute(
+//                   builder: (context) =>
+//                       ProductDetailsPage(productId: product.id!)));
+//         },
+//     child: SizedBox(
+//       child: Card(
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(1),
+//         ),
+//         elevation: 2,
+//         shadowColor: Colors.red,
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Stack(children: [
+//               AspectRatio(
+//                 aspectRatio: 1,
+//                 child: defaultImages.isNotEmpty
+//                     ? Image.memory(
+//                         base64Decode(defaultImages.first),
+//                         fit: BoxFit.cover,
+//                         errorBuilder: (context, error, stackTrace) {
+//                           return const Icon(Icons.image_not_supported);
+//                         },
+//                       )
+//                     : const Icon(Icons.image_not_supported),
+//               ),
+//               Positioned(child: ProductLikeButton(isFavorite: isFavorite, productId: productId, selectedVariant: selectedVariant, selectedSize: selectedSize))
+//             ]),
+//             Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   const Text(
+//                     '⭐⭐⭐⭐⭐(5)',
+//                     style: TextStyle(fontSize: 10),
+//                   ),
+//                   Text(
+//                     product.productName,
+//                     style: styling(
+//                       fontFamily: 'Poppins-Bold',
+//                       fontSize: 20,
+//                     ),
+//                     maxLines: 1,
+//                     overflow: TextOverflow.ellipsis,
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Text(
+//                     product.brandName ?? 'Unknown Brand',
+//                     style: styling(
+//                       fontFamily: 'Poppins-Regular',
+//                       fontSize: 12,
+//                       color: Colors.grey,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Text(
+//                     '₹${defaultPrice.toStringAsFixed(2)}',
+//                     style: styling(
+//                       fontFamily: 'Poppins-Regular',
+//                       fontSize: 12,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
 buildProductGridItem({
   required BuildContext context,
@@ -11,79 +105,122 @@ buildProductGridItem({
 }) {
   final defaultImages = product.getDefaultImages();
   final defaultPrice = product.getDefaultPrice();
+  final defaultVariant = product.variants.first; // Get the first variant
+  final defaultSize = defaultVariant.sizeStocks.first; // Get the first size
 
-  return GestureDetector(
-    onTap: onTap ??
-        () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      ProductDetailsPage(productId: product.id!)));
-        },
-    child: SizedBox(
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(1),
-        ),
-        elevation: 2,
-        shadowColor: Colors.red,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: defaultImages.isNotEmpty
-                  ? Image.memory(
-                      base64Decode(defaultImages.first),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.image_not_supported);
-                      },
-                    )
-                  : const Icon(Icons.image_not_supported),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+  return BlocProvider(
+    create: (context) => FavoriteBloc(favoriteRepository: FavoriteRepository())
+      ..add(CheckFavoriteStatusEvent(
+        productId: product.id!,
+        variantId: defaultVariant.id,
+        size: defaultSize.size,
+      )),
+    child: BlocBuilder<FavoriteBloc, FavoriteState>(
+      builder: (context, favoriteState) {
+        bool isFavorite = favoriteState is FavoriteStatusState
+            ? favoriteState.isFavorite
+            : false;
+
+        return GestureDetector(
+          onTap: onTap ??
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ProductDetailsPage(productId: product.id!),
+                  ),
+                );
+              },
+          child: SizedBox(
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(1),
+              ),
+              elevation: 2,
+              shadowColor: Colors.red,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '⭐⭐⭐⭐⭐(5)',
-                    style: TextStyle(fontSize: 10),
+                  Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: defaultImages.isNotEmpty
+                            ? Image.memory(
+                                base64Decode(defaultImages.first),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.image_not_supported);
+                                },
+                              )
+                            : const Icon(Icons.image_not_supported),
+                      ),
+                      Positioned(
+                        top: -3,
+                        right: -6,
+                        child: Container(
+                          height: 38,
+                          width: 28,
+                          decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 227, 192, 192),
+                              borderRadius: BorderRadius.circular(5)),
+                          child: ProductLikeButton(
+                            isFavorite: isFavorite,
+                            productId: product.id!,
+                            selectedVariant: defaultVariant,
+                            selectedSize: defaultSize,
+                            size: 18,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    product.productName,
-                    style: styling(
-                      fontFamily: 'Poppins-Bold',
-                      fontSize: 20,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.brandName ?? 'Unknown Brand',
-                    style: styling(
-                      fontFamily: 'Poppins-Regular',
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹${defaultPrice.toStringAsFixed(2)}',
-                    style: styling(
-                      fontFamily: 'Poppins-Regular',
-                      fontSize: 12,
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '⭐⭐⭐⭐⭐(5)',
+                          style: TextStyle(fontSize: 10),
+                        ),
+                        Text(
+                          product.productName,
+                          style: styling(
+                            fontFamily: 'Poppins-Bold',
+                            fontSize: 20,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.brandName ?? 'Unknown Brand',
+                          style: styling(
+                            fontFamily: 'Poppins-Regular',
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '₹${defaultPrice.toStringAsFixed(2)}',
+                          style: styling(
+                            fontFamily: 'Poppins-Regular',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     ),
   );
 }
@@ -141,11 +278,14 @@ buildErrorWidget(String errorMessage) {
 buildEmptyStateWidget({
   required String message,
   String? subMessage,
+  String? imagePath,
 }) {
   return Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Lottie.asset(
+            imagePath ?? 'assets/animations/Animation - 1735364832916.json'),
         Text(
           message,
           style: styling(

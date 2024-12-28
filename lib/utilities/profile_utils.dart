@@ -15,3 +15,16 @@ Future<int> getAddressCount(String userId) async {
     return 0;
   }
 }
+
+Future<int> getOrdersCount(String userId) async {
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('orders')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    return snapshot.docs.length;
+  } catch (e) {
+    return 0;
+  }
+}

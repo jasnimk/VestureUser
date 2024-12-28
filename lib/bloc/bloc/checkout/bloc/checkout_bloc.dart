@@ -59,7 +59,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         final orderId = await _checkoutRepository.createOrder(
           addressId: event.addressId,
           items: event.items,
-          totalAmount: event.totalAmount,
           paymentMethod: 'cod',
           paymentId: null,
         );
@@ -93,7 +92,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         final orderId = await _checkoutRepository.createOrder(
           addressId: currentState.addressId,
           items: currentState.items,
-          totalAmount: currentState.totalAmount,
           paymentMethod: 'stripe',
           paymentId: event.paymentIntentId,
         );

@@ -642,10 +642,10 @@ class OrderSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: BeveledRectangleBorder(),
+      shape: Border(),
       shadowColor: const Color.fromARGB(255, 145, 31, 23),
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: 0.5,
       child: InkWell(
         onTap: () => Navigator.push(
           context,
@@ -662,14 +662,15 @@ class OrderSummaryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Order #${order.id.substring(0, 8)}',
-                      style: headerStyling()),
+                      style: headerStyling(fontSize: 15)),
                   StatusChip(status: order.orderStatus),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 'Placed on ${DateFormatter.format(order.createdAt)}',
-                style: subHeaderStyling(),
+                style: subHeaderStyling(fontSize: 12
+                ),
               ),
               const SizedBox(height: 12),
               Row(
