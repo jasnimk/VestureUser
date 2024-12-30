@@ -38,3 +38,15 @@ class StripePaymentSuccessEvent extends CheckoutEvent {
   final String paymentIntentId;
   StripePaymentSuccessEvent(this.paymentIntentId);
 }
+
+class WalletPaymentEvent extends CheckoutEvent {
+  final String addressId;
+  final List<CartItem> items;
+  final double totalAmount;
+
+  WalletPaymentEvent({
+    required this.addressId,
+    required this.items,
+    required this.totalAmount,
+  });
+}

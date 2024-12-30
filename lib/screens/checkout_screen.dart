@@ -11,6 +11,7 @@ import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dar
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_state.dart';
 import 'package:vesture_firebase_user/models/cart_item.dart';
 import 'package:vesture_firebase_user/repository/stripe_repo.dart';
+import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/select_address.dart';
 import 'package:vesture_firebase_user/screens/success.dart';
 import 'package:vesture_firebase_user/widgets/checkout_widget.dart';
@@ -31,11 +32,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _selectedAddressId;
   final double _shippingCharge = 60.0;
   bool _isPlacingOrder = false;
+  double _walletBalance = 0.0;
 
   @override
   void initState() {
     super.initState();
     context.read<AddressBloc>().add(AddressLoadEvent());
+    _loadWalletBalance();
+  }
+
+  Future<void> _loadWalletBalance() async {
+    final walletRepo = WalletRepository();
+    try {
+      final balance = await walletRepo.getBalance();
+      setState(() {
+        _walletBalance = balance;
+      });
+    } catch (e) {
+      print('Error loading wallet balance: $e');
+    }
   }
 
   @override
@@ -59,12 +74,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
-          } else if (state is CheckoutLoading) {
+          } else if (state is CheckoutLoading || state is PaymentProcessing) {
             setState(() => _isPlacingOrder = true);
-          } else if (state is PaymentProcessing) {
-            setState(() => _isPlacingOrder = true);
+          } else if (state is WalletPaymentCompleted) {
+            setState(() => _isPlacingOrder = false);
+            context.read<CartBloc>().add(ClearCartEvent());
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (ctx) => SuccessScreen()),
+            );
           }
         },
+        // body: BlocListener<CheckoutBloc, CheckoutState>(
+        //   listener: (context, state) {
+        //     if (state is CheckoutSuccess) {
+        //       setState(() => _isPlacingOrder = false);
+        //       context.read<CartBloc>().add(ClearCartEvent());
+        //       Navigator.of(context).pushReplacement(
+        //         MaterialPageRoute(builder: (ctx) => SuccessScreen()),
+        //       );
+        //     } else if (state is CheckoutError) {
+        //       setState(() => _isPlacingOrder = false);
+        //       ScaffoldMessenger.of(context).showSnackBar(
+        //         SnackBar(content: Text(state.message)),
+        //       );
+        //     } else if (state is CheckoutLoading) {
+        //       setState(() => _isPlacingOrder = true);
+        //     } else if (state is PaymentProcessing) {
+        //       setState(() => _isPlacingOrder = true);
+        //     }
+        //   },
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -175,7 +213,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(1),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,6 +245,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _selectedPaymentMethod = value.toString();
               });
             },
+          ),
+          RadioListTile(
+            title: Row(
+              children: [
+                Text(
+                  'Wallet Balance',
+                  style: styling(),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '₹${_walletBalance.toStringAsFixed(2)}',
+                  style: styling(
+                    color: _walletBalance > 0 ? Colors.green : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            value: 'wallet',
+            groupValue: _selectedPaymentMethod,
+            onChanged: _walletBalance > 0
+                ? (value) {
+                    setState(() {
+                      _selectedPaymentMethod = value.toString();
+                    });
+                  }
+                : null,
           ),
         ],
       ),
@@ -243,6 +307,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return EnhancedOrderSummary(shippingCharge: _shippingCharge);
   }
 
+  // void _handlePlaceOrder() async {
+  //   if (_isPlacingOrder) return;
+
+  //   if (_selectedAddressId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please select a delivery address')),
+  //     );
+  //     return;
+  //   }
+
+  //   final cartState = context.read<CartBloc>().state;
+  //   if (cartState is CartLoadedState) {
+  //     double subtotal = 0;
+  //     double totalDiscount = 0;
+
+  //     for (var item in cartState.items) {
+  //       if (item.price <= 0 || item.quantity <= 0) {
+  //         continue;
+  //       }
+
+  //       final basePrice = item.price * item.quantity;
+  //       subtotal += basePrice;
+
+  //       final maxDiscountPercent = calculateMaxDiscount(item);
+  //       final itemDiscount = basePrice * (maxDiscountPercent / 100);
+  //       totalDiscount += itemDiscount;
+  //     }
+
+  //     final finalAmount = subtotal - totalDiscount + _shippingCharge;
+
+  //     if (_selectedPaymentMethod == 'cod') {
+  //       context.read<CheckoutBloc>().add(
+  //             InitiateCheckoutEvent(
+  //               addressId: _selectedAddressId!,
+  //               items: cartState.items,
+  //               totalAmount: finalAmount,
+  //               paymentMethod: 'cod',
+  //             ),
+  //           );
+  //     } else if (_selectedPaymentMethod == 'stripe') {
+  //       context.read<CheckoutBloc>().add(InitiateCheckoutEvent(
+  //             addressId: _selectedAddressId!,
+  //             paymentMethod: 'stripe',
+  //             items: cartState.items,
+  //             totalAmount: finalAmount,
+  //           ));
+
+  //       await StripeService.instance
+  //           .makePayment(amount: finalAmount, context: context);
+  //     }
+  //   }
+  // }
+
+  double calculateMaxDiscount(CartItem item) {
+    return [
+      item.percentDiscount,
+      item.categoryOffer,
+      item.product?.offer ?? 0.0
+    ].reduce((a, b) => a > b ? a : b);
+  }
+
   void _handlePlaceOrder() async {
     if (_isPlacingOrder) return;
 
@@ -273,7 +398,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final finalAmount = subtotal - totalDiscount + _shippingCharge;
 
-      if (_selectedPaymentMethod == 'cod') {
+      if (_selectedPaymentMethod == 'wallet') {
+        if (_walletBalance < finalAmount) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Insufficient wallet balance'),
+            ),
+          );
+          return;
+        }
+
+        context.read<CheckoutBloc>().add(
+              WalletPaymentEvent(
+                addressId: _selectedAddressId!,
+                items: cartState.items,
+                totalAmount: finalAmount,
+              ),
+            );
+      } else if (_selectedPaymentMethod == 'cod') {
         context.read<CheckoutBloc>().add(
               InitiateCheckoutEvent(
                 addressId: _selectedAddressId!,
@@ -283,24 +425,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'stripe') {
-        context.read<CheckoutBloc>().add(InitiateCheckoutEvent(
-              addressId: _selectedAddressId!,
-              paymentMethod: 'stripe',
-              items: cartState.items,
-              totalAmount: finalAmount,
-            ));
+        context.read<CheckoutBloc>().add(
+              InitiateCheckoutEvent(
+                addressId: _selectedAddressId!,
+                paymentMethod: 'stripe',
+                items: cartState.items,
+                totalAmount: finalAmount,
+              ),
+            );
 
         await StripeService.instance
             .makePayment(amount: finalAmount, context: context);
       }
     }
-  }
-
-  double calculateMaxDiscount(CartItem item) {
-    return [
-      item.percentDiscount,
-      item.categoryOffer,
-      item.product?.offer ?? 0.0
-    ].reduce((a, b) => a > b ? a : b);
   }
 }

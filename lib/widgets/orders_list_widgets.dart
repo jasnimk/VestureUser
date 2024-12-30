@@ -1,6 +1,12 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_event.dart';
+import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_state.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
+import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class EmptyOrdersView extends StatelessWidget {
@@ -43,26 +49,223 @@ class OrderCard extends StatelessWidget {
   final OrderModel order;
 
   const OrderCard({super.key, required this.order});
+  bool _canBeCancelled() {
+    final orderStatus = order.orderStatus.toLowerCase();
 
-  @override
+    // Check if order is delivered
+    if (orderStatus != 'delivered') {
+      return false;
+    }
+
+    // Check if deliveredAt is available
+    if (order.deliveredAt == null) {
+      return false;
+    }
+
+    // Check if within 3 days of delivery
+    final daysSinceDelivery =
+        DateTime.now().difference(order.deliveredAt!).inDays;
+    return daysSinceDelivery <= 3;
+  }
+
   Widget build(BuildContext context) {
+    // Debug prints for troubleshooting
+    print('DEBUG: Building OrderCard');
+    print('DEBUG: Order Status: ${order.orderStatus}');
+    print('DEBUG: Delivered At: ${order.deliveredAt}');
+
+    final bool canBeCancelled = _canBeCancelled();
+
+    print('DEBUG: Can Be Cancelled: $canBeCancelled');
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          spacing: 10,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             OrderHeader(order: order),
-            // const Divider(height: 24),
-            OrderItemsList(items: order.items),
-            //const Divider(height: 24),
+            OrderItemsList(
+              items: order.items,
+              showReviewButton: order.orderStatus.toLowerCase() == 'delivered',
+            ),
             OrderSummary(order: order),
+            if (canBeCancelled) ...[
+              const SizedBox(height: 16),
+              BlocConsumer<OrdersBloc, OrdersState>(
+                listener: (context, state) {
+                  if (state is OrderCancellationSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  } else if (state is OrderCancellationFailure) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.error),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  if (state is OrderCancellationInProgress) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<OrdersBloc>().add(
+                              CancelOrder(
+                                orderId: order.id,
+                                amount: order.totalAmount,
+                              ),
+                            );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Return Order'),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class OrderItemsList extends StatelessWidget {
+  final List<OrderItem> items;
+  final bool showReviewButton;
+
+  const OrderItemsList({
+    super.key,
+    required this.items,
+    required this.showReviewButton,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    print('DEBUG: OrderItemsList - Show Review Button: $showReviewButton');
+    print('DEBUG: OrderItemsList - Number of items: ${items.length}');
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, index) {
+        print('DEBUG: Building item at index $index');
+        return OrderItemCard(
+          item: items[index],
+          showReviewButton: showReviewButton,
+        );
+      },
+    );
+  }
+}
+
+class OrderItemCard extends StatelessWidget {
+  final OrderItem item;
+  final bool showReviewButton;
+
+  const OrderItemCard({
+    super.key,
+    required this.item,
+    required this.showReviewButton,
+  });
+
+  void _navigateToReviewScreen(BuildContext context) {
+    // Navigate to review screen implementation
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print('DEBUG: OrderItemCard - Show Review Button: $showReviewButton');
+    print('DEBUG: OrderItemCard - Product Name: ${item.productName}');
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ProductImage(imageUrl: item.imageUrl),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    children: [
+                      Text(
+                        item.productName,
+                        style: styling(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item.color} | ${item.size}',
+                        style: styling(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  if (showReviewButton)
+                    IconButton(
+                      icon: Icon(
+                        Icons.rate_review_outlined,
+                        size: 20,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      onPressed: () => _navigateToReviewScreen(context),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '₹${item.originalPrice}',
+                    style: styling(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Qty: ${item.quantity}',
+                    style: styling(color: Colors.grey),
+                  ),
+                ],
+              ),
+              if (item.categoryOffer > 0) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '${item.categoryOffer}% off',
+                      style: styling(
+                        color: Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '₹${item.discountAmount}',
+                      style: styling(),
+                    )
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -96,43 +299,6 @@ class OrderHeader extends StatelessWidget {
             style: styling(fontSize: 12),
           ),
         ],
-      ],
-    );
-  }
-}
-
-class OrderItemsList extends StatelessWidget {
-  final List<OrderItem> items;
-
-  const OrderItemsList({super.key, required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, index) => OrderItemCard(item: items[index]),
-    );
-  }
-}
-
-class OrderItemCard extends StatelessWidget {
-  final OrderItem item;
-
-  const OrderItemCard({super.key, required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ProductImage(imageUrl: item.imageUrl),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ProductDetails(item: item),
-        ),
       ],
     );
   }
@@ -213,10 +379,6 @@ class ProductDetails extends StatelessWidget {
                 '₹${item.discountAmount}',
                 style: styling(),
               )
-              // Text(
-              //   '₹${item.oriprice - (item.price - item.effectivePrice)}',
-              //   style: styling(),
-              // )
             ],
           ),
         ],

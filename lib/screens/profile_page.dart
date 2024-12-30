@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:vesture_firebase_user/models/wallet_model.dart';
+import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/address_page.dart';
 import 'package:vesture_firebase_user/screens/orders_page.dart';
 import 'package:vesture_firebase_user/screens/payment_page.dart';
@@ -11,12 +13,15 @@ import 'package:vesture_firebase_user/utilities/profile_utils.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  ProfilePage({super.key});
+  final walletRepo = WalletRepository();
 
   @override
   Widget build(BuildContext context) {
     final User? currentUser = FirebaseAuth.instance.currentUser;
-
+    walletRepo.getWallet().listen((wallet) {
+      print('Current balance: ${wallet.balance}');
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -184,14 +189,41 @@ class ProfilePage extends StatelessWidget {
                 );
               },
             ),
-            buildProfileListTile(
-              title: 'Payment methods',
-              subtitle: 'Visa **34',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const PaymentMethodsPage()),
-              ),
+            StreamBuilder<WalletModel>(
+              stream: walletRepo.getWallet(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return buildProfileListTile(
+                    title: 'Wallet',
+                    subtitle: 'Loading...',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => WalletScreen()),
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return buildProfileListTile(
+                    title: 'Wallet',
+                    subtitle: 'Error fetching wallet',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => WalletScreen()),
+                    ),
+                  );
+                }
+
+                final wallet = snapshot.data!;
+                return buildProfileListTile(
+                  title: 'Wallet',
+                  subtitle: 'Balance: ${wallet.balance.toStringAsFixed(2)}',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => WalletScreen()),
+                  ),
+                );
+              },
             ),
             buildProfileListTile(
               title: 'Settings',

@@ -15,3 +15,15 @@ class OrdersError extends OrdersState {
   final String message;
   OrdersError(this.message);
 }
+
+class OrderCancellationInProgress extends OrdersState {}
+
+class OrderCancellationSuccess extends OrdersState {
+  final String message;
+  OrderCancellationSuccess(this.message);
+}
+
+class OrderCancellationFailure extends OrdersState {
+  final String error;
+  OrderCancellationFailure(this.error);
+}

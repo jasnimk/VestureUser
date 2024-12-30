@@ -3,50 +3,55 @@ import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_state.dart';
 import 'package:vesture_firebase_user/repository/checkout_repo.dart';
+import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 
 class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CheckoutRepository _checkoutRepository;
-  final CartBloc _cartBloc;
+  final WalletRepository _walletRepository;
 
   CheckoutBloc({
     required CheckoutRepository checkoutRepository,
     required CartBloc cartBloc,
   })  : _checkoutRepository = checkoutRepository,
-        _cartBloc = cartBloc,
+        _walletRepository = WalletRepository(),
         super(CheckoutInitial()) {
     on<InitiateCheckoutEvent>(_onInitiateCheckout);
     on<StripePaymentSuccessEvent>(_onStripePaymentSuccess);
+    on<WalletPaymentEvent>(_onWalletPayment);
   }
+  Future _onWalletPayment(
+    WalletPaymentEvent event,
+    Emitter emit,
+  ) async {
+    try {
+      emit(CheckoutLoading());
 
-  // Future<void> _onInitiateCheckout(
-  //   InitiateCheckoutEvent event,
-  //   Emitter<CheckoutState> emit,
-  // ) async {
-  //   try {
-  //     emit(CheckoutLoading());
+      final orderId = await _checkoutRepository.createOrder(
+        addressId: event.addressId,
+        items: event.items,
+        paymentMethod: 'wallet',
+        paymentId: null,
+      );
 
-  //     if (event.paymentMethod == 'cod') {
-  //       final orderId = await _checkoutRepository.createOrder(
-  //         addressId: event.addressId,
-  //         items: event.items,
-  //         totalAmount: event.totalAmount,
-  //         paymentMethod: 'cod',
-  //         paymentId: null,
-  //       );
-  //       emit(CheckoutSuccess(orderId));
-  //     } else if (event.paymentMethod == 'stripe') {
-  //       emit(PaymentProcessing());
-  //       // Store order details temporarily
-  //       emit(StripePaymentInitiated(
-  //         addressId: event.addressId,
-  //         items: event.items,
-  //         totalAmount: event.totalAmount,
-  //       ));
-  //     }
-  //   } catch (e) {
-  //     emit(CheckoutError(e.toString()));
-  //   }
-  // }
+      try {
+        await _walletRepository.deductFromWallet(
+          event.totalAmount,
+          'Payment for order #$orderId',
+          orderId,
+        );
+
+        await _checkoutRepository.updateOrderPaymentStatus(
+            orderId, 'completed');
+
+        emit(WalletPaymentCompleted(orderId));
+      } catch (walletError) {
+        await _checkoutRepository.updateOrderPaymentStatus(orderId, 'failed');
+        throw walletError;
+      }
+    } catch (e) {
+      emit(CheckoutError(e.toString()));
+    }
+  }
 
   Future<void> _onInitiateCheckout(
     InitiateCheckoutEvent event,
@@ -83,7 +88,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     Emitter<CheckoutState> emit,
   ) async {
     try {
-      // Store the current state before emitting loading
       final currentState = state;
 
       emit(CheckoutLoading());
@@ -106,41 +110,3 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     }
   }
 }
-
-// class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
-//   final CheckoutRepository _checkoutRepository;
-//   final CartBloc _cartBloc;
-
-//   CheckoutBloc({
-//     required CheckoutRepository checkoutRepository,
-//     required CartBloc cartBloc,
-//   })  : _checkoutRepository = checkoutRepository,
-//         _cartBloc = cartBloc,
-//         super(CheckoutInitial()) {
-//     on<InitiateCheckoutEvent>(_onInitiateCheckout);
-//   }
-
-//   Future<void> _onInitiateCheckout(
-//     InitiateCheckoutEvent event,
-//     Emitter<CheckoutState> emit,
-//   ) async {
-//     try {
-//       emit(CheckoutLoading());
-
-//       if (event.paymentMethod == 'cod') {
-//         final orderId = await _checkoutRepository.createOrder(
-//           addressId: event.addressId,
-//           items: event.items,
-//           totalAmount: event.totalAmount,
-//           paymentMethod: 'cod',
-//         );
-//         emit(CheckoutSuccess(orderId));
-//       } else if (event.paymentMethod == 'stripe') {
-//         emit(PaymentProcessing());
-//         // Stripe implementation will go here later
-//       }
-//     } catch (e) {
-//       emit(CheckoutError(e.toString()));
-//     }
-//   }
-// }

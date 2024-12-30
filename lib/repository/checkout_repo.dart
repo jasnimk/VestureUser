@@ -259,4 +259,11 @@ class CheckoutRepository {
       throw Exception('Failed to create order: $e');
     }
   }
+
+  Future<void> updateOrderPaymentStatus(String orderId, String status) async {
+    await _firestore.collection('orders').doc(orderId).update({
+      'paymentStatus': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

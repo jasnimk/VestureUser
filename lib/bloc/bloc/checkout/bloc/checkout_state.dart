@@ -60,3 +60,10 @@ class StripePaymentInitiated extends CheckoutState {
     required this.totalAmount,
   });
 }
+
+// Add new state in checkout_state.dart
+class WalletPaymentCompleted extends CheckoutState {
+  final String orderId;
+
+  WalletPaymentCompleted(this.orderId);
+}

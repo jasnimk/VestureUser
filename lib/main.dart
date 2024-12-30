@@ -15,6 +15,7 @@ import 'package:vesture_firebase_user/bloc/cubit/theme_cubit.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_state.dart';
 import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_bloc.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_bloc.dart';
+import 'package:vesture_firebase_user/bloc/wallet/bloc/wallet_bloc.dart';
 import 'package:vesture_firebase_user/firebase_options.dart';
 import 'package:vesture_firebase_user/repository/address_repo.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
@@ -22,6 +23,7 @@ import 'package:vesture_firebase_user/repository/category_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
 import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/repository/product_repo.dart';
+import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/splash_screen.dart';
 import 'package:vesture_firebase_user/themes/theme.dart';
 import 'package:vesture_firebase_user/utilities/keysApi.dart';
@@ -71,7 +73,27 @@ void main() async {
           create: (_) => CartBloc(cartRepository: CartRepository()),
         ),
         BlocProvider(create: (_) => AddressBloc(userId!, AddressRepository())),
-        BlocProvider(create: (_) => OrdersBloc(OrdersRepository()))
+        // First create WalletBloc
+        BlocProvider<WalletBloc>(
+          create: (_) => WalletBloc(walletRepository: WalletRepository()),
+        ),
+        // Then create OrdersBloc with WalletBloc dependency
+        BlocProvider<OrdersBloc>(
+          create: (context) => OrdersBloc(
+            OrdersRepository(),
+            context.read<WalletBloc>(),
+          ),
+        ),
+        // In main.dart
+        //   BlocProvider(
+        //     create: (context) => OrdersBloc(
+        //       OrdersRepository(),
+        //       context.read<WalletBloc>(), // Get WalletBloc from context
+        //     ),
+        //   ),
+        //   //  BlocProvider(create: (_) => OrdersBloc(OrdersRepository(),)),
+        //   BlocProvider(
+        //       create: (_) => WalletBloc(walletRepository: WalletRepository())),
       ],
       child: MyApp(),
     ),

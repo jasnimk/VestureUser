@@ -38,16 +38,14 @@ TextStyle styling({
 }
 
 buildProfileListTile(
-    {required String title,
-    required String subtitle,
-    required VoidCallback onTap}) {
+    {required String title, String? subtitle, required VoidCallback onTap}) {
   return ListTile(
     title: Text(
       title,
       style: styling(fontSize: 16, fontWeight: FontWeight.w600),
     ),
     subtitle: Text(
-      subtitle,
+      subtitle ?? '',
       style: styling(
           fontSize: 14, fontWeight: FontWeight.w400, color: Colors.grey),
     ),

@@ -1,12 +1,7 @@
-// product_details_widgets.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:like_button/like_button.dart';
-import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_bloc.dart';
-import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_event.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_bloc.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_event.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
@@ -25,13 +20,13 @@ class ProductImageSection extends StatelessWidget {
   final SizeStockModel selectedSize;
 
   const ProductImageSection({
-    Key? key,
+    super.key,
     required this.imageUrls,
     required this.isFavorite,
     required this.productId,
     required this.selectedVariant,
     required this.selectedSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -67,74 +62,6 @@ class ProductImageSection extends StatelessWidget {
             selectedVariant: selectedVariant,
             selectedSize: selectedSize,
           ),
-          //   child: LikeButton(
-          //     isLiked: isFavorite,
-          //     onTap: (bool isLiked) async {
-          //       final newFavoriteState = !isLiked;
-
-          //       if (!newFavoriteState) {
-          //         showDialog(
-          //           context: context,
-          //           builder: (BuildContext dialogContext) {
-          //             return AlertDialog(
-          //               title:
-          //                   Text('Remove from Favorites', style: headerStyling()),
-          //               content: Text(
-          //                   'Are you sure you want to remove this item from favorites?',
-          //                   style: styling()),
-          //               actions: <Widget>[
-          //                 TextButton(
-          //                   child: Text('Cancel',
-          //                       style: styling(color: Colors.grey)),
-          //                   onPressed: () {
-          //                     Navigator.of(dialogContext).pop();
-          //                     return;
-          //                   },
-          //                 ),
-          //                 TextButton(
-          //                   child: Text('Confirm',
-          //                       style: styling(color: Colors.red)),
-          //                   onPressed: () {
-          //                     Navigator.of(dialogContext).pop();
-          //                     context
-          //                         .read<FavoriteBloc>()
-          //                         .add(ToggleFavoriteEvent(
-          //                           productId: productId,
-          //                           variant: selectedVariant,
-          //                           sizeStock: selectedSize,
-          //                           context: context,
-          //                         ));
-          //                   },
-          //                 ),
-          //               ],
-          //             );
-          //           },
-          //         );
-          //       } else {
-          //         context.read<FavoriteBloc>().add(ToggleFavoriteEvent(
-          //               productId: productId,
-          //               variant: selectedVariant,
-          //               sizeStock: selectedSize,
-          //               context: context,
-          //             ));
-          //       }
-
-          //       return newFavoriteState;
-          //     },
-          //     likeBuilder: (bool isLiked) {
-          //       return Icon(
-          //         isLiked ? Icons.favorite : Icons.favorite_border,
-          //         color: const Color.fromRGBO(196, 28, 13, 0.829),
-          //         size: 30,
-          //       );
-          //     },
-          //     circleColor:
-          //         const CircleColor(start: Colors.red, end: Colors.redAccent),
-          //     bubblesColor: const BubblesColor(
-          //       dotPrimaryColor: Colors.redAccent,
-          //       dotSecondaryColor: Colors.red,
-          //     ),
-          //   ),
         )
       ],
     );

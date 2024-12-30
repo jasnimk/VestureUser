@@ -57,6 +57,7 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   timeline_tile: ^2.0.0
   lottie: ^3.3.0
+  intl: ^0.20.1
 
 dev_dependencies:
   flutter_test:

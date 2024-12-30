@@ -563,6 +563,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_state.dart';
+import 'package:vesture_firebase_user/bloc/wallet/bloc/wallet_bloc.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
 import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/screens/order_details.dart';
@@ -576,7 +577,10 @@ class OrderListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Make sure BlocProvider is at the top level
     return BlocProvider(
-      create: (context) => OrdersBloc(OrdersRepository())..add(LoadOrders()),
+      create: (context) => OrdersBloc(
+        OrdersRepository(),
+        context.read<WalletBloc>(),
+      )..add(LoadOrders()),
       child: const OrderListView(),
     );
   }
@@ -669,8 +673,7 @@ class OrderSummaryCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Placed on ${DateFormatter.format(order.createdAt)}',
-                style: subHeaderStyling(fontSize: 12
-                ),
+                style: subHeaderStyling(fontSize: 12),
               ),
               const SizedBox(height: 12),
               Row(
