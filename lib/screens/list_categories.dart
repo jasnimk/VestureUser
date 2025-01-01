@@ -96,7 +96,7 @@ class _ShopCategoriesState extends State<ShopCategories> {
                       final category = categories[index - 1];
                       return ListTile(
                         title: Text(
-                          category.name,
+                          category.name!,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

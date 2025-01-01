@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_bloc.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_event.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_state.dart';
+import 'package:vesture_firebase_user/models/category_model.dart';
 import 'package:vesture_firebase_user/models/product_filter.dart';
 import 'package:vesture_firebase_user/screens/filter_screen.dart';
 import 'package:vesture_firebase_user/screens/product_Details.dart';
@@ -34,11 +35,13 @@ class _CategoryProductDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    CategoryModel categoryModel = CategoryModel(id: widget.categoryId);
     return Scaffold(
       appBar: buildCustomAppBar(context: context, title: 'Category Products'),
       body: Column(
         children: [
-          customSearchField(context),
+          const CustomSearch(),
+          // customSearchField(context, categor: categoryModel),
           customFilterSortRow(
             context: context,
             onFilterPressed: () {

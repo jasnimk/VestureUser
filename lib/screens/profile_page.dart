@@ -7,7 +7,7 @@ import 'package:vesture_firebase_user/models/wallet_model.dart';
 import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/address_page.dart';
 import 'package:vesture_firebase_user/screens/orders_page.dart';
-import 'package:vesture_firebase_user/screens/payment_page.dart';
+import 'package:vesture_firebase_user/screens/wallet_screen.dart';
 import 'package:vesture_firebase_user/screens/settings_page.dart';
 import 'package:vesture_firebase_user/utilities/profile_utils.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';

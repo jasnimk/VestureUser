@@ -1,30 +1,3 @@
-// // lib/repository/orders_repository.dart
-
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import '../models/order_model.dart';
-
-// class OrdersRepository {
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-//   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-// Stream<List<OrderModel>> getOrders() {
-//   final user = _auth.currentUser;
-//   if (user == null) throw Exception('User not logged in');
-
-//   return _firestore
-//       .collection('orders')
-//       .where('userId', isEqualTo: user.uid)
-//       .orderBy('createdAt', descending: true)
-//       .snapshots()
-//       .map((snapshot) {
-//     return snapshot.docs.map((doc) {
-//       return OrderModel.fromMap(doc.data(), doc.id);
-//     }).toList();
-//   });
-// }
-// }
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
@@ -60,70 +33,6 @@ class OrdersRepository {
     });
   }
 
-  // Future<void> cancelOrder(String orderId) async {
-  //   final user = _auth.currentUser;
-  //   if (user == null) throw Exception('User not logged in');
-
-  //   final orderRef = _firestore.collection('orders').doc(orderId);
-
-  //   return _firestore.runTransaction((transaction) async {
-  //     final orderDoc = await transaction.get(orderRef);
-  //     if (!orderDoc.exists) {
-  //       throw Exception('Order not found');
-  //     }
-
-  //     final order = OrderModel.fromMap(orderDoc.data()!, orderDoc.id);
-
-  //     // Verify order belongs to current user
-  //     if (order.userId != user.uid) {
-  //       throw Exception('Unauthorized to cancel this order');
-  //     }
-
-  //     // Check if already cancelled
-  //     if (order.orderStatus.toLowerCase() == 'cancelled') {
-  //       throw Exception('Order is already cancelled');
-  //     }
-
-  //     // Check if order is delivered and within cancellation window
-  //     if (order.orderStatus.toLowerCase() != 'delivered') {
-  //       throw Exception('Only delivered orders can be cancelled');
-  //     }
-
-  //     if (order.deliveredAt == null) {
-  //       throw Exception('Delivery date not found');
-  //     }
-
-  //     final daysSinceDelivery =
-  //         DateTime.now().difference(order.deliveredAt!).inDays;
-  //     if (daysSinceDelivery > 3) {
-  //       throw Exception(
-  //           'Order can only be cancelled within 3 days of delivery');
-  //     }
-
-  //     // Process refund based on payment method
-
-  //     // Add to wallet since order is delivered
-  //     await _walletRepository.addToWallet(
-  //       order.totalAmount,
-  //       'Refund for cancelled order #${order.id.substring(0, 8)}',
-  //       order.id,
-  //     );
-
-  //     // Delete from orders collection
-  //     transaction.delete(orderRef);
-
-  //     // Store in cancelled_orders collection
-  //     final cancelledOrderRef =
-  //         _firestore.collection('cancelled_orders').doc(orderId);
-  //     transaction.set(cancelledOrderRef, {
-  //       ...orderDoc.data()!,
-  //       'cancelledAt': FieldValue.serverTimestamp(),
-  //       'refundedToWallet': true,
-  //       'refundAmount': order.totalAmount,
-  //       'daysSinceDelivery': daysSinceDelivery,
-  //     });
-  //   });
-  // }
   Future<void> cancelOrder(String orderId) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');

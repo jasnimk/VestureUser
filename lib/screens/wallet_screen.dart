@@ -14,7 +14,6 @@ class WalletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => WalletBloc(
-        // Pass a new instance directly instead of using context.read()
         walletRepository: WalletRepository(),
       )..add(LoadWallet()),
       child: const WalletView(),
@@ -43,7 +42,23 @@ class WalletView extends StatelessWidget {
           }
 
           if (state is WalletLoaded) {
-            return _WalletContent(wallet: state.wallet);
+            return StreamBuilder<List<WalletTransaction>>(
+              stream: WalletRepository().getTransactions(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final transactions = snapshot.data ?? [];
+                return _WalletContent(
+                  wallet: state.wallet.copyWith(transactions: transactions),
+                );
+              },
+            );
           }
 
           return const Center(child: Text('Something went wrong'));

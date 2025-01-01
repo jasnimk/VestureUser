@@ -62,7 +62,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
       appBar: buildCustomAppBar(context: context, title: 'Shopping Page'),
       body: Column(
         children: [
-          customSearchField(context),
+         const CustomSearch(),
           customFilterSortRow(
             context: context,
             onFilterPressed: () => _handleFilterPress(context),

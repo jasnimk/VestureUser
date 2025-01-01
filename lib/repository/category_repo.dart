@@ -27,7 +27,7 @@ class CategoryRepository {
 
       final searchQuery = query.toLowerCase().trim();
       return categories.where((category) {
-        final categoryName = category.name.toLowerCase();
+        final categoryName = category.name!.toLowerCase();
         return categoryName.contains(searchQuery);
       }).toList();
     } catch (e) {

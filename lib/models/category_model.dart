@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CategoryModel {
   String? id;
-  String name;
+  String? name;
   String? parentCategoryId;
   bool isActive;
   Timestamp? createdAt;
@@ -10,7 +10,7 @@ class CategoryModel {
 
   CategoryModel({
     this.id,
-    required this.name,
+    this.name,
     this.parentCategoryId,
     this.isActive = true,
     this.createdAt,
