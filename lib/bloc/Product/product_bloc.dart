@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/models/product_filter.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
@@ -23,6 +25,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<ApplyFiltersEvent>(_onApplyFilters);
     on<ClearFiltersEvent>(_onClearFilters);
     on<UpdateFilterEvent>(_onUpdateFilter);
+    on<VisualSearchEvent>(_onVisualSearch);
   }
   Future<void> _onSortProducts(
       SortProductsEvent event, Emitter<ProductState> emit) async {
@@ -135,6 +138,21 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductLoadedState(products: products));
     } catch (e) {
       emit(ProductErrorState(errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onVisualSearch(
+      VisualSearchEvent event, Emitter<ProductState> emit) async {
+    try {
+      emit(VisualSearchLoadingState());
+
+      // Perform the visual search using the repository
+      final products =
+          await _productRepository.searchByImage(event.image as File);
+
+      emit(VisualSearchLoadedState(products: products));
+    } catch (e) {
+      emit(VisualSearchErrorState(errorMessage: e.toString()));
     }
   }
 }

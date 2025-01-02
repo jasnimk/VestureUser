@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:vesture_firebase_user/models/product_filter.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
 
@@ -38,4 +41,10 @@ class ClearFiltersEvent extends ProductEvent {}
 class UpdateFilterEvent extends ProductEvent {
   final ProductFilter updatedFilter;
   UpdateFilterEvent({required this.updatedFilter});
+}
+
+class VisualSearchEvent extends ProductEvent {
+  final File image;
+
+  VisualSearchEvent({required this.image});
 }

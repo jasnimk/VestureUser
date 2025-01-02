@@ -30,3 +30,17 @@ class ProductCategoriesLoadedState extends ProductState {
 
   ProductCategoriesLoadedState({required this.categories});
 }
+
+class VisualSearchLoadingState extends ProductState {}
+
+class VisualSearchLoadedState extends ProductState {
+  final List<ProductModel> products;
+
+  VisualSearchLoadedState({required this.products});
+}
+
+class VisualSearchErrorState extends ProductState {
+  final String errorMessage;
+
+  VisualSearchErrorState({required this.errorMessage});
+}

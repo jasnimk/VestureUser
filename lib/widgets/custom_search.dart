@@ -429,6 +429,8 @@
 //     ),
 //   );
 // }
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -438,6 +440,7 @@ import 'package:vesture_firebase_user/bloc/bloc/categories_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/categories_event.dart';
 import 'package:vesture_firebase_user/models/category_model.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
+import 'package:vesture_firebase_user/widgets/visual_search_widget.dart';
 import 'package:vesture_firebase_user/widgets/voice_search.dart';
 
 class CustomSearch extends StatefulWidget {
@@ -458,10 +461,13 @@ class CustomSearch extends StatefulWidget {
 
 class _CustomSearchState extends State<CustomSearch> {
   final TextEditingController _searchController = TextEditingController();
+  void _handleVisualSearch(File image) {
+    context.read<ProductBloc>().add(VisualSearchEvent(image: image));
+  }
 
   void performSearch(String query) {
     query = query.trim().toLowerCase();
-    
+
     if (widget.isCategorySearch) {
       context.read<CategoryBloc>().add(SearchCategoriesEvent(query: query));
     } else {
@@ -507,7 +513,15 @@ class _CustomSearchState extends State<CustomSearch> {
               ),
               IconButton(
                 icon: const Icon(FontAwesomeIcons.camera, size: 15),
-                onPressed: () {},
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) => VisualSearchModal(
+                      onSearch: _handleVisualSearch,
+                    ),
+                  );
+                },
                 iconSize: 20,
               ),
             ],

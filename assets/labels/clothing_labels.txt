@@ -1,0 +1,20 @@
+t-shirt
+shirt
+dress
+pants
+skirt
+jacket
+coat
+sweater
+blouse
+jeans
+shorts
+suit
+blazer
+hoodie
+sweatshirt
+polo shirt
+tank top
+cardigan
+vest
+jumpsuit
