@@ -107,6 +107,9 @@ flutter:
     - assets/Images/success.png
     - assets/animations/Animation - 1735364832916.json
     - assets/animations/Animation - 1735366182958.json
+    - assets/animations/Animation - 1735834409097.json
+    - assets/animations/Animation - 1735834925724.json
+
   fonts:
     - family: Poppins-Black
       fonts:

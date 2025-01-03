@@ -11,10 +11,14 @@ class ProductLoadingState extends ProductState {}
 class ProductLoadedState extends ProductState {
   final List<ProductModel> products;
   final ProductFilter? filter;
+  final bool isSearchActive;
+  final String? searchQuery;
 
   ProductLoadedState({
     required this.products,
     this.filter,
+    this.isSearchActive = false,
+    this.searchQuery,
   });
 }
 

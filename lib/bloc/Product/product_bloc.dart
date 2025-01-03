@@ -11,6 +11,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final ProductRepository _productRepository;
   List<ProductModel> _originalProducts = [];
   ProductFilter? _currentFilter;
+  List<ProductModel> _searchResults = [];
+  bool _isSearchActive = false;
 
   ProductBloc({required ProductRepository productRepository})
       : _productRepository = productRepository,
@@ -27,6 +29,23 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<UpdateFilterEvent>(_onUpdateFilter);
     on<VisualSearchEvent>(_onVisualSearch);
   }
+  Future<void> _onSearchProducts(
+      SearchProductsEvent event, Emitter<ProductState> emit) async {
+    try {
+      emit(ProductLoadingState());
+      final products = await _productRepository.searchProducts(event.query);
+      _searchResults = products;
+      _isSearchActive = true;
+      emit(ProductLoadedState(
+          products: products,
+          filter: _currentFilter,
+          isSearchActive: true // Add this flag to track search state
+          ));
+    } catch (e) {
+      emit(ProductErrorState(errorMessage: e.toString()));
+    }
+  }
+
   Future<void> _onSortProducts(
       SortProductsEvent event, Emitter<ProductState> emit) async {
     try {
@@ -85,6 +104,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   Future<void> _onFetchProducts(
       FetchProductsEvent event, Emitter<ProductState> emit) async {
+    print('Fetch Products Event Triggered'); // Add this line
+
     try {
       emit(ProductLoadingState());
       final products = await _productRepository.fetchProducts();
@@ -130,25 +151,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     }
   }
 
-  Future<void> _onSearchProducts(
-      SearchProductsEvent event, Emitter<ProductState> emit) async {
-    try {
-      emit(ProductLoadingState());
-      final products = await _productRepository.searchProducts(event.query);
-      emit(ProductLoadedState(products: products));
-    } catch (e) {
-      emit(ProductErrorState(errorMessage: e.toString()));
-    }
-  }
-
   Future<void> _onVisualSearch(
       VisualSearchEvent event, Emitter<ProductState> emit) async {
     try {
       emit(VisualSearchLoadingState());
 
-      // Perform the visual search using the repository
-      final products =
-          await _productRepository.searchByImage(event.image as File);
+      final products = await _productRepository.searchByImage(event.image);
 
       emit(VisualSearchLoadedState(products: products));
     } catch (e) {

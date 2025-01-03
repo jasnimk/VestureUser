@@ -238,7 +238,7 @@ class AddToCartButton extends StatelessWidget {
                     ),
                   );
             },
-            isCartAction: true,
+            //isCartAction: true,
           );
         },
         icon: FontAwesomeIcons.cartShopping,

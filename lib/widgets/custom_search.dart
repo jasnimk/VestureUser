@@ -459,30 +459,107 @@ class CustomSearch extends StatefulWidget {
   State<CustomSearch> createState() => _CustomSearchState();
 }
 
+// class _CustomSearchState extends State<CustomSearch> {
+//   final TextEditingController _searchController = TextEditingController();
+//   void _handleVisualSearch(File image) {
+//     context.read<ProductBloc>().add(VisualSearchEvent(image: image));
+//   }
+
+//   void performSearch(String query) {
+//     query = query.trim().toLowerCase();
+
+//     if (widget.isCategorySearch) {
+//       context.read<CategoryBloc>().add(SearchCategoriesEvent(query: query));
+//     } else {
+//       if (query.isNotEmpty) {
+//         context.read<ProductBloc>().add(SearchProductsEvent(query: query));
+//       } else {
+//         context.read<ProductBloc>().add(FetchProductsEvent());
+//       }
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     _searchController.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.all(16.0),
+//       child: TextField(
+//         controller: _searchController,
+//         decoration: InputDecoration(
+//           hintText: 'Search',
+//           hintStyle: styling(fontFamily: 'Poppins-Regular', color: Colors.grey),
+//           prefixIcon: Row(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               IconButton(
+//                 icon: const Icon(FontAwesomeIcons.microphone, size: 15),
+//                 onPressed: () {
+//                   showModalBottomSheet(
+//                     context: context,
+//                     isScrollControlled: true,
+//                     builder: (context) => VoiceSearchModal(
+//                       searchController: _searchController,
+//                       onSearch: performSearch,
+//                     ),
+//                   );
+//                 },
+//                 iconSize: 20,
+//               ),
+//               IconButton(
+//                 icon: const Icon(FontAwesomeIcons.camera, size: 15),
+//                 onPressed: () {
+//                   showModalBottomSheet(
+//                     context: context,
+//                     isScrollControlled: true,
+//                     builder: (context) => VisualSearchModal(
+//                       onSearch: _handleVisualSearch,
+//                     ),
+//                   );
+//                 },
+//                 iconSize: 20,
+//               ),
+//             ],
+//           ),
+//           suffixIcon: IconButton(
+//             icon: const Icon(FontAwesomeIcons.magnifyingGlass, size: 15),
+//             onPressed: () => performSearch(_searchController.text),
+//           ),
+//           border: const OutlineInputBorder(),
+//         ),
+//         onChanged: performSearch,
+//         onSubmitted: performSearch,
+//       ),
+//     );
+//   }
+// }
 class _CustomSearchState extends State<CustomSearch> {
   final TextEditingController _searchController = TextEditingController();
+
   void _handleVisualSearch(File image) {
     context.read<ProductBloc>().add(VisualSearchEvent(image: image));
   }
 
   void performSearch(String query) {
     query = query.trim().toLowerCase();
-
     if (widget.isCategorySearch) {
       context.read<CategoryBloc>().add(SearchCategoriesEvent(query: query));
     } else {
       if (query.isNotEmpty) {
         context.read<ProductBloc>().add(SearchProductsEvent(query: query));
-      } else {
-        context.read<ProductBloc>().add(FetchProductsEvent());
       }
+      // Remove the automatic FetchProductsEvent when query is empty
     }
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _clearSearch() {
+    _searchController.clear();
+    context.read<ProductBloc>().add(FetchProductsEvent());
   }
 
   @override
@@ -526,14 +603,23 @@ class _CustomSearchState extends State<CustomSearch> {
               ),
             ],
           ),
-          suffixIcon: IconButton(
-            icon: const Icon(FontAwesomeIcons.magnifyingGlass, size: 15),
-            onPressed: () => performSearch(_searchController.text),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchController.text.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 15),
+                  onPressed: _clearSearch,
+                ),
+              IconButton(
+                icon: const Icon(FontAwesomeIcons.magnifyingGlass, size: 15),
+                onPressed: () => performSearch(_searchController.text),
+              ),
+            ],
           ),
           border: const OutlineInputBorder(),
         ),
-        onChanged: performSearch,
-        onSubmitted: performSearch,
+        onSubmitted: performSearch, // Only keep onSubmitted
       ),
     );
   }

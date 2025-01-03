@@ -48,3 +48,5 @@ class VisualSearchEvent extends ProductEvent {
 
   VisualSearchEvent({required this.image});
 }
+
+class ClearSearchEvent extends ProductEvent {}
