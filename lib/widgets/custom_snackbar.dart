@@ -8,6 +8,7 @@ class CustomSnackBar {
     Color backgroundColor = const Color.fromRGBO(196, 28, 13, 0.829),
     Color textColor = Colors.white,
     Duration duration = const Duration(seconds: 2),
+    SnackBarAction? action,
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -19,6 +20,7 @@ class CustomSnackBar {
         backgroundColor: backgroundColor,
         duration: duration,
         behavior: SnackBarBehavior.floating,
+        action: action,
       ),
     );
   }

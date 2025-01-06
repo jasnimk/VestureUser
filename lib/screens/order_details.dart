@@ -59,8 +59,9 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
-import 'package:vesture_firebase_user/widgets/cancel_order.dart';
+import 'package:vesture_firebase_user/repository/pdf_repo.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/order_status_widget.dart';
 import 'package:vesture_firebase_user/widgets/orders_list_widgets.dart';
@@ -82,9 +83,22 @@ class OrderDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: buildCustomAppBar(
-        context: context,
-        title: 'Order #${order.id.substring(0, 8)}',
-      ),
+          context: context,
+          title: 'Order #${order.id.substring(0, 8)}',
+          actions: [
+            IconButton(
+              icon: const Icon(FontAwesomeIcons.download),
+              onPressed: () => _downloadInvoice(context),
+              tooltip: 'Download Invoice',
+              iconSize: 18,
+            ),
+            IconButton(
+              icon: const Icon(FontAwesomeIcons.share),
+              onPressed: () => _shareOrder(context),
+              tooltip: 'Share Order',
+              iconSize: 18,
+            ),
+          ]),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -130,5 +144,13 @@ class OrderDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _downloadInvoice(BuildContext context) async {
+    await InvoiceGenerator.downloadAndShare(order, false, context);
+  }
+
+  void _shareOrder(BuildContext context) async {
+    await InvoiceGenerator.downloadAndShare(order, true, context);
   }
 }

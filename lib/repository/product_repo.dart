@@ -478,7 +478,6 @@ extension VisualSearchRepository on ProductRepository {
           .where((product) => product.score > 0)
           .toList();
 
-      // Sort by score in descending order
       scoredProducts.sort((a, b) => b.score.compareTo(a.score));
       print('Matched products count: ${scoredProducts.length}');
 
@@ -511,17 +510,14 @@ extension VisualSearchRepository on ProductRepository {
     int commonWords = 0;
 
     for (var labelWord in labelWords) {
-      // Exact match has highest weight
       if (searchKeywords.contains(labelWord)) {
         score += 1.0;
         commonWords++;
         continue;
       }
 
-      // Partial matches with length consideration
       for (var keyword in searchKeywords) {
         if (keyword.contains(labelWord) || labelWord.contains(keyword)) {
-          // Calculate similarity based on length difference
           double lengthScore = 1 -
               (labelWord.length - keyword.length).abs() /
                   max(labelWord.length, keyword.length);
@@ -532,7 +528,6 @@ extension VisualSearchRepository on ProductRepository {
       }
     }
 
-    // Boost score based on proportion of common words
     double commonWordRatio =
         commonWords / max(labelWords.length, searchKeywords.length);
     return score * (1 + commonWordRatio);
