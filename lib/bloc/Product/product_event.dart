@@ -17,8 +17,12 @@ class FetchCategoriesEvent extends ProductEvent {}
 
 class SearchProductsEvent extends ProductEvent {
   final String query;
+  final String? categoryId; // Add categoryId parameter
 
-  SearchProductsEvent({required this.query});
+  SearchProductsEvent({
+    required this.query,
+    this.categoryId, // Make it optional
+  });
 }
 
 class SortProductsEvent extends ProductEvent {
@@ -45,8 +49,12 @@ class UpdateFilterEvent extends ProductEvent {
 
 class VisualSearchEvent extends ProductEvent {
   final File image;
+  final String? categoryId; // Add categoryId parameter
 
-  VisualSearchEvent({required this.image});
+  VisualSearchEvent({
+    required this.image,
+    this.categoryId, // Make it optional
+  });
 }
 
 class ClearSearchEvent extends ProductEvent {}

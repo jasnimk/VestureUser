@@ -7,6 +7,7 @@ import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_state.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
 import 'package:vesture_firebase_user/repository/orders_repo.dart';
+import 'package:vesture_firebase_user/screens/add_review.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class EmptyOrdersView extends StatelessWidget {
@@ -224,7 +225,26 @@ class OrderItemCard extends StatelessWidget {
                         size: 20,
                         color: Theme.of(context).primaryColor,
                       ),
-                      onPressed: () => _navigateToReviewScreen(context),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AddReviewDialog(
+                              productId: item.productId,
+                              productName: item.productName,
+                            );
+                          },
+                        );
+
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //       builder: (context) => AddReviewScreen(
+                        //           productId: item.productId,
+                        //           productName: item.productName)),
+                        // );
+                      },
+                      // onPressed: () => _navigateToReviewScreen(context),
                     ),
                 ],
               ),

@@ -84,25 +84,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
           }
         },
-        // body: BlocListener<CheckoutBloc, CheckoutState>(
-        //   listener: (context, state) {
-        //     if (state is CheckoutSuccess) {
-        //       setState(() => _isPlacingOrder = false);
-        //       context.read<CartBloc>().add(ClearCartEvent());
-        //       Navigator.of(context).pushReplacement(
-        //         MaterialPageRoute(builder: (ctx) => SuccessScreen()),
-        //       );
-        //     } else if (state is CheckoutError) {
-        //       setState(() => _isPlacingOrder = false);
-        //       ScaffoldMessenger.of(context).showSnackBar(
-        //         SnackBar(content: Text(state.message)),
-        //       );
-        //     } else if (state is CheckoutLoading) {
-        //       setState(() => _isPlacingOrder = true);
-        //     } else if (state is PaymentProcessing) {
-        //       setState(() => _isPlacingOrder = true);
-        //     }
-        //   },
+      
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -306,59 +288,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildOrderSummary() {
     return EnhancedOrderSummary(shippingCharge: _shippingCharge);
   }
-
-  // void _handlePlaceOrder() async {
-  //   if (_isPlacingOrder) return;
-
-  //   if (_selectedAddressId == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Please select a delivery address')),
-  //     );
-  //     return;
-  //   }
-
-  //   final cartState = context.read<CartBloc>().state;
-  //   if (cartState is CartLoadedState) {
-  //     double subtotal = 0;
-  //     double totalDiscount = 0;
-
-  //     for (var item in cartState.items) {
-  //       if (item.price <= 0 || item.quantity <= 0) {
-  //         continue;
-  //       }
-
-  //       final basePrice = item.price * item.quantity;
-  //       subtotal += basePrice;
-
-  //       final maxDiscountPercent = calculateMaxDiscount(item);
-  //       final itemDiscount = basePrice * (maxDiscountPercent / 100);
-  //       totalDiscount += itemDiscount;
-  //     }
-
-  //     final finalAmount = subtotal - totalDiscount + _shippingCharge;
-
-  //     if (_selectedPaymentMethod == 'cod') {
-  //       context.read<CheckoutBloc>().add(
-  //             InitiateCheckoutEvent(
-  //               addressId: _selectedAddressId!,
-  //               items: cartState.items,
-  //               totalAmount: finalAmount,
-  //               paymentMethod: 'cod',
-  //             ),
-  //           );
-  //     } else if (_selectedPaymentMethod == 'stripe') {
-  //       context.read<CheckoutBloc>().add(InitiateCheckoutEvent(
-  //             addressId: _selectedAddressId!,
-  //             paymentMethod: 'stripe',
-  //             items: cartState.items,
-  //             totalAmount: finalAmount,
-  //           ));
-
-  //       await StripeService.instance
-  //           .makePayment(amount: finalAmount, context: context);
-  //     }
-  //   }
-  // }
 
   double calculateMaxDiscount(CartItem item) {
     return [

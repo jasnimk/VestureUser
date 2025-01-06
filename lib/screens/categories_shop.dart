@@ -40,7 +40,9 @@ class _CategoryProductDetailsScreenState
       appBar: buildCustomAppBar(context: context, title: 'Category Products'),
       body: Column(
         children: [
-          const CustomSearch(),
+          CustomSearch(
+            categoryId: widget.categoryId, // Pass the categoryId here
+          ),
           // customSearchField(context, categor: categoryModel),
           customFilterSortRow(
             context: context,

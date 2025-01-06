@@ -1,56 +1,3 @@
-// // Create a visual search widget
-// import 'dart:io';
-
-// import 'package:flutter/material.dart';
-// import 'package:flutter/widgets.dart';
-// import 'package:image_picker/image_picker.dart';
-
-// class VisualSearchModal extends StatefulWidget {
-//   final Function(File) onSearch;
-
-//   const VisualSearchModal({Key? key, required this.onSearch}) : super(key: key);
-
-//   @override
-//   State<VisualSearchModal> createState() => _VisualSearchModalState();
-// }
-
-// class _VisualSearchModalState extends State<VisualSearchModal> {
-//   final ImagePicker _picker = ImagePicker();
-
-//   Future<void> _pickImage(ImageSource source) async {
-//     try {
-//       final XFile? image = await _picker.pickImage(source: source);
-//       if (image != null) {
-//         widget.onSearch(File(image.path));
-//         Navigator.pop(context);
-//       }
-//     } catch (e) {
-//       print('Error picking image: $e');
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.all(20),
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           ListTile(
-//             leading: const Icon(Icons.camera_alt),
-//             title: const Text('Take a Photo'),
-//             onTap: () => _pickImage(ImageSource.camera),
-//           ),
-//           ListTile(
-//             leading: const Icon(Icons.photo_library),
-//             title: const Text('Choose from Gallery'),
-//             onTap: () => _pickImage(ImageSource.gallery),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -68,8 +15,6 @@ class VisualSearchModal extends StatefulWidget {
 
 class _VisualSearchModalState extends State<VisualSearchModal> {
   final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
-  bool _isSearching = false;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -80,10 +25,8 @@ class _VisualSearchModalState extends State<VisualSearchModal> {
       );
 
       if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
-        // Automatically start search when image is selected
+        setState(() {});
+
         _startSearch(image);
       }
     } catch (e) {
@@ -94,9 +37,8 @@ class _VisualSearchModalState extends State<VisualSearchModal> {
   }
 
   void _startSearch(XFile image) {
-    setState(() => _isSearching = true);
     widget.onSearch(File(image.path));
-    // Close modal to show results in main UI
+
     Navigator.pop(context);
   }
 

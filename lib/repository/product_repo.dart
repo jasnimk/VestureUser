@@ -61,42 +61,124 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductModel>> searchProducts(String query) async {
+  // Future<List<ProductModel>> searchProducts(String query) async {
+  //   try {
+  //     final lowerCaseQuery = query.toLowerCase().trim();
+
+  //     var querySnapshot = await _firestore
+  //         .collection('products')
+  //         .where('searchKeywords', arrayContains: lowerCaseQuery)
+  //         .where('isActive', isEqualTo: true)
+  //         .get();
+
+  //     if (querySnapshot.docs.isEmpty) {
+  //       querySnapshot = await _firestore
+  //           .collection('products')
+  //           .where('isActive', isEqualTo: true)
+  //           .get();
+  //     }
+
+  //     final filteredDocs = querySnapshot.docs.where((doc) {
+  //       final data = doc.data();
+  //       final searchKeywords = (data['searchKeywords'] as List? ?? [])
+  //           .map((k) => k.toString().toLowerCase())
+  //           .toList();
+
+  //       return searchKeywords
+  //               .any((keyword) => keyword.contains(lowerCaseQuery)) ||
+  //           (data['productName'] as String?)
+  //                   ?.toLowerCase()
+  //                   .contains(lowerCaseQuery) ==
+  //               true ||
+  //           (data['description'] as String?)
+  //                   ?.toLowerCase()
+  //                   .contains(lowerCaseQuery) ==
+  //               true;
+  //     }).toList();
+
+  //     return _mapProducts(filteredDocs);
+  //   } catch (e) {
+  //     rethrow;
+  //   }
+  // }
+  Future<List<ProductModel>> searchProducts(String query,
+      {String? categoryId}) async {
     try {
       final lowerCaseQuery = query.toLowerCase().trim();
 
-      var querySnapshot = await _firestore
-          .collection('products')
-          .where('searchKeywords', arrayContains: lowerCaseQuery)
-          .where('isActive', isEqualTo: true)
-          .get();
+      // Base query that checks both parentCategoryId and subCategoryId
+      Query productsQuery =
+          _firestore.collection('products').where('isActive', isEqualTo: true);
 
-      if (querySnapshot.docs.isEmpty) {
-        querySnapshot = await _firestore
-            .collection('products')
-            .where('isActive', isEqualTo: true)
+      if (categoryId != null) {
+        // Get products that match either parentCategoryId or subCategoryId
+        final parentCategoryQuery =
+            productsQuery.where('parentCategoryId', isEqualTo: categoryId);
+
+        final subCategoryQuery =
+            productsQuery.where('subCategoryId', isEqualTo: categoryId);
+
+        // Execute both queries
+        final parentResults = await parentCategoryQuery.get();
+        final subResults = await subCategoryQuery.get();
+
+        // Combine and deduplicate results
+        final allDocs = {...parentResults.docs, ...subResults.docs};
+
+        // Filter combined results by search query
+        final filteredDocs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data == null) return false;
+
+          // Safely access and convert searchKeywords
+          final searchKeywords = (data['searchKeywords'] as List?)
+                  ?.map((k) => k.toString().toLowerCase())
+                  .toList() ??
+              [];
+
+          final productName = (data['productName'] as String?)?.toLowerCase();
+          final description = (data['description'] as String?)?.toLowerCase();
+
+          return searchKeywords
+                  .any((keyword) => keyword.contains(lowerCaseQuery)) ||
+              productName?.contains(lowerCaseQuery) == true ||
+              description?.contains(lowerCaseQuery) == true;
+        }).toList();
+
+        return _mapProducts(filteredDocs.toList());
+      } else {
+        // If no category filter, perform regular search
+        var querySnapshot = await productsQuery
+            .where('searchKeywords', arrayContains: lowerCaseQuery)
             .get();
+
+        if (querySnapshot.docs.isEmpty) {
+          // If no exact matches, try broader search
+          querySnapshot = await productsQuery.get();
+
+          final filteredDocs = querySnapshot.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>?;
+            if (data == null) return false;
+
+            final searchKeywords = (data['searchKeywords'] as List?)
+                    ?.map((k) => k.toString().toLowerCase())
+                    .toList() ??
+                [];
+
+            final productName = (data['productName'] as String?)?.toLowerCase();
+            final description = (data['description'] as String?)?.toLowerCase();
+
+            return searchKeywords
+                    .any((keyword) => keyword.contains(lowerCaseQuery)) ||
+                productName?.contains(lowerCaseQuery) == true ||
+                description?.contains(lowerCaseQuery) == true;
+          }).toList();
+
+          return _mapProducts(filteredDocs);
+        }
+
+        return _mapProducts(querySnapshot.docs);
       }
-
-      final filteredDocs = querySnapshot.docs.where((doc) {
-        final data = doc.data();
-        final searchKeywords = (data['searchKeywords'] as List? ?? [])
-            .map((k) => k.toString().toLowerCase())
-            .toList();
-
-        return searchKeywords
-                .any((keyword) => keyword.contains(lowerCaseQuery)) ||
-            (data['productName'] as String?)
-                    ?.toLowerCase()
-                    .contains(lowerCaseQuery) ==
-                true ||
-            (data['description'] as String?)
-                    ?.toLowerCase()
-                    .contains(lowerCaseQuery) ==
-                true;
-      }).toList();
-
-      return _mapProducts(filteredDocs);
     } catch (e) {
       rethrow;
     }

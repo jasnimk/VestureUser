@@ -1,5 +1,3 @@
-// profile_list_tile.dart
-
 import 'package:flutter/material.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 

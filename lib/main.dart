@@ -15,6 +15,7 @@ import 'package:vesture_firebase_user/bloc/cubit/theme_cubit.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_state.dart';
 import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_bloc.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_bloc.dart';
+import 'package:vesture_firebase_user/bloc/review/bloc/review_bloc.dart';
 import 'package:vesture_firebase_user/bloc/wallet/bloc/wallet_bloc.dart';
 import 'package:vesture_firebase_user/firebase_options.dart';
 import 'package:vesture_firebase_user/repository/address_repo.dart';
@@ -23,6 +24,7 @@ import 'package:vesture_firebase_user/repository/category_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
 import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/repository/product_repo.dart';
+import 'package:vesture_firebase_user/repository/review_repo.dart';
 import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/splash_screen.dart';
 import 'package:vesture_firebase_user/themes/theme.dart';
@@ -82,6 +84,11 @@ void main() async {
           create: (context) => OrdersBloc(
             OrdersRepository(),
             context.read<WalletBloc>(),
+          ),
+        ),
+        BlocProvider<ReviewBloc>(
+          create: (context) => ReviewBloc(
+            reviewRepository: ReviewRepository(),
           ),
         ),
         // In main.dart

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-textWidget(String name, BuildContext context) {
+Widget textWidget(String name, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: Text(
@@ -37,7 +37,7 @@ TextStyle styling({
   );
 }
 
-buildProfileListTile(
+Widget buildProfileListTile(
     {required String title, String? subtitle, required VoidCallback onTap}) {
   return ListTile(
     title: Text(

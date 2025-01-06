@@ -8,6 +8,7 @@ import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_state.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
+import 'package:vesture_firebase_user/screens/product_review_section.dart';
 import 'package:vesture_firebase_user/widgets/product_details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/similar_products.dart';
@@ -109,6 +110,11 @@ class ProductDetailsPage extends StatelessWidget {
                             product: product,
                             selectedVariant: selectedVariant,
                             selectedSize: selectedSize,
+                          ),
+                          customDivider(),
+                          ProductReviewsSection(
+                            productId: product.id!,
+                            productName: product.productName,
                           ),
                           customDivider(),
                           SimilarProductsList(
