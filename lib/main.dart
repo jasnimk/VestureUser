@@ -10,6 +10,8 @@ import 'package:vesture_firebase_user/bloc/authentication/authentication_bloc.da
 import 'package:vesture_firebase_user/bloc/bloc/bloc/orders_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/categories_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/coupon/bloc/coupon_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/userprofile_bloc.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_cubit.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_state.dart';
@@ -21,6 +23,8 @@ import 'package:vesture_firebase_user/firebase_options.dart';
 import 'package:vesture_firebase_user/repository/address_repo.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
 import 'package:vesture_firebase_user/repository/category_repo.dart';
+import 'package:vesture_firebase_user/repository/checkout_repo.dart';
+import 'package:vesture_firebase_user/repository/coupon_repo.dart';
 import 'package:vesture_firebase_user/repository/fav_repository.dart';
 import 'package:vesture_firebase_user/repository/orders_repo.dart';
 import 'package:vesture_firebase_user/repository/product_repo.dart';
@@ -91,6 +95,18 @@ void main() async {
             reviewRepository: ReviewRepository(),
           ),
         ),
+        BlocProvider(
+          create: (context) => CouponBloc(
+            couponRepository: CouponRepository(),
+          ),
+        ),
+        // BlocProvider<CheckoutBloc>(
+        //   create: (context) => CheckoutBloc(
+        //     checkoutRepository: CheckoutRepository(),
+        //     cartBloc: context.read<CartBloc>(),
+        //     couponBloc: context.read<CouponBloc>(),
+        //   ),
+        // ),
         // In main.dart
         //   BlocProvider(
         //     create: (context) => OrdersBloc(

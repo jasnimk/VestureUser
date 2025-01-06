@@ -20,7 +20,6 @@ class InvoiceGenerator {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // Header
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -38,12 +37,9 @@ class InvoiceGenerator {
                 ],
               ),
               pw.SizedBox(height: 20),
-
-              // Order Items Table
               pw.Table(
                 border: pw.TableBorder.all(),
                 children: [
-                  // Table Header
                   pw.TableRow(
                     children: [
                       pw.Padding(
@@ -72,7 +68,6 @@ class InvoiceGenerator {
                       ),
                     ],
                   ),
-                  // Item Rows
                   ...order.items
                       .map((item) => pw.TableRow(
                             children: [
@@ -100,8 +95,6 @@ class InvoiceGenerator {
                 ],
               ),
               pw.SizedBox(height: 20),
-
-              // Order Summary
               pw.Container(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Column(
@@ -124,31 +117,11 @@ class InvoiceGenerator {
       ),
     );
 
-    // Save the PDF
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/Invoice_${order.id.substring(0, 8)}.pdf');
     await file.writeAsBytes(await pdf.save());
     return file;
   }
-
-  // static Future<void> downloadAndShare(OrderModel order, bool share) async {
-  //   final file = await generateInvoice(order);
-
-  //   if (share) {
-  //     // Share the PDF
-  //     await Share.shareXFiles(
-  //       [XFile(file.path)],
-  //       subject: 'Invoice for Order #${order.id.substring(0, 8)}',
-  //     );
-  //   } else {
-  //     // Download the PDF
-  //     final output = await getDownloadsDirectory() ??
-  //         await getApplicationDocumentsDirectory();
-  //     final savedFile = await file
-  //         .copy('${output.path}/Invoice_${order.id.substring(0, 8)}.pdf');
-  //     print('PDF saved to: ${savedFile.path}');
-  //   }
-  // }
 
   static Future<void> downloadAndShare(
       OrderModel order, bool share, BuildContext context) async {

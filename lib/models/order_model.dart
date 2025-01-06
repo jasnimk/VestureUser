@@ -16,9 +16,13 @@ class OrderModel {
   final String orderStatus;
   final DateTime createdAt;
   final String? paymentId;
-   final DateTime? deliveredAt;
+  final DateTime? deliveredAt;
+  final String? appliedCouponId;
+  final double? couponDiscount;
 
   OrderModel({
+    this.appliedCouponId,
+    this.couponDiscount,
     required this.id,
     required this.userId,
     required this.addressId,
@@ -51,6 +55,8 @@ class OrderModel {
       'orderStatus': orderStatus,
       'createdAt': Timestamp.fromDate(createdAt),
       'paymentId': paymentId,
+      'appliedCouponId': appliedCouponId,
+      'couponDiscount': couponDiscount,
     };
   }
 
@@ -72,8 +78,8 @@ class OrderModel {
       orderStatus: map['orderStatus'] ?? '',
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       paymentId: map['paymentId'],
-      deliveredAt: map['deliveredAt'] != null 
-          ? (map['deliveredAt'] as Timestamp).toDate() 
+      deliveredAt: map['deliveredAt'] != null
+          ? (map['deliveredAt'] as Timestamp).toDate()
           : null,
     );
   }

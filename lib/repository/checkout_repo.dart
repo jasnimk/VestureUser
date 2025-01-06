@@ -160,6 +160,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vesture_firebase_user/models/cart_item.dart';
+import 'package:vesture_firebase_user/models/coupon_model.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
 import 'package:vesture_firebase_user/repository/cart_repo.dart';
 
@@ -173,6 +174,8 @@ class CheckoutRepository {
     required List<CartItem> items,
     required String paymentMethod,
     String? paymentId,
+    CouponModel? appliedCoupon, // Add this parameter
+    double? couponDiscount, // Add this parameter
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
@@ -244,6 +247,8 @@ class CheckoutRepository {
         orderStatus: 'pending',
         createdAt: DateTime.now(),
         paymentId: paymentId,
+        appliedCouponId: appliedCoupon?.id,
+        couponDiscount: couponDiscount,
       ).toMap();
 
       await orderRef.set(orderData);
@@ -252,7 +257,11 @@ class CheckoutRepository {
           (paymentMethod == 'stripe' && paymentId != null)) {
         await _cartRepository.clearCart();
       }
-
+      if (appliedCoupon != null) {
+        await _firestore.collection('coupons').doc(appliedCoupon.id).update({
+          'usedBy': FieldValue.arrayUnion([user.uid]),
+        });
+      }
       return orderId;
     } catch (e) {
       print('Failed to create order: $e');
