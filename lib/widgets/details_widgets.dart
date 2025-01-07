@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:lottie/lottie.dart';
 import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_bloc.dart';
 import 'package:vesture_firebase_user/bloc/favorites/bloc/favorite_event.dart';
@@ -138,28 +139,64 @@ buildProductGridItem({
   );
 }
 
+// buildProductGridView({
+//   required List<dynamic> products,
+//   required BuildContext context,
+//   VoidCallback? Function(dynamic product)? onItemTap,
+// }) {
+//   return GridView.builder(
+//     padding: const EdgeInsets.all(10),
+//     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//       crossAxisCount: 2,
+//       childAspectRatio: 0.65,
+//       crossAxisSpacing: 2,
+//       mainAxisSpacing: 2,
+//     ),
+//     itemCount: products.length,
+//     itemBuilder: (context, index) {
+//       final product = products[index];
+//       return buildProductGridItem(
+//         context: context,
+//         product: product,
+//         onTap: onItemTap != null ? () => onItemTap(product) : null,
+//       );
+//     },
+//   );
+// }
 buildProductGridView({
   required List<dynamic> products,
   required BuildContext context,
   VoidCallback? Function(dynamic product)? onItemTap,
 }) {
-  return GridView.builder(
-    padding: const EdgeInsets.all(10),
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      childAspectRatio: 0.65,
-      crossAxisSpacing: 2,
-      mainAxisSpacing: 2,
+  return AnimationLimiter(
+    child: GridView.builder(
+      padding: const EdgeInsets.all(10),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return AnimationConfiguration.staggeredGrid(
+          position: index,
+          duration: const Duration(milliseconds: 400),
+          columnCount: 2,
+          child: SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: buildProductGridItem(
+                context: context,
+                product: product,
+                onTap: onItemTap != null ? () => onItemTap(product) : null,
+              ),
+            ),
+          ),
+        );
+      },
     ),
-    itemCount: products.length,
-    itemBuilder: (context, index) {
-      final product = products[index];
-      return buildProductGridItem(
-        context: context,
-        product: product,
-        onTap: onItemTap != null ? () => onItemTap(product) : null,
-      );
-    },
   );
 }
 

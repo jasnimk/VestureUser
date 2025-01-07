@@ -76,7 +76,7 @@ class WalletRepository {
         }
       }
       final currentBalance =
-          (walletDoc.data() as Map<String, dynamic>)?['balance'] as num? ?? 0.0;
+          (walletDoc.data() as Map<String, dynamic>)['balance'] as num? ?? 0.0;
       // // Calculate new balance
       // final currentBalance =
       //     (walletDoc.data()?['balance'] as num?)?.toDouble() ?? 0.0;

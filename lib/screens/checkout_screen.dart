@@ -9,6 +9,9 @@ import 'package:vesture_firebase_user/bloc/address/bloc/adress_state.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_state.dart';
+import 'package:vesture_firebase_user/bloc/bloc/coupon/bloc/coupon_bloc.dart';
+import 'package:vesture_firebase_user/bloc/bloc/coupon/bloc/coupon_event.dart';
+import 'package:vesture_firebase_user/bloc/bloc/coupon/bloc/coupon_state.dart';
 import 'package:vesture_firebase_user/models/cart_item.dart';
 import 'package:vesture_firebase_user/repository/stripe_repo.dart';
 import 'package:vesture_firebase_user/repository/wallet_repo.dart';
@@ -38,6 +41,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     context.read<AddressBloc>().add(AddressLoadEvent());
+    context.read<CartBloc>().add(LoadCartEvent());
+    context.read<CouponBloc>().add(LoadAvailableCouponsEvent());
+    // Add this line
+
     _loadWalletBalance();
   }
 
@@ -84,28 +91,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
           }
         },
-      
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAddressSection(),
-                    const SizedBox(height: 24),
-                    _buildPaymentMethodSection(),
-                    const SizedBox(height: 24),
-                    _buildOrderSummary(),
-                    const SizedBox(height: 24),
-                  ],
+        child: BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
+          if (cartState is CartLoadingState) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (cartState is CartErrorState) {
+            return Center(
+              child: Text('Error loading cart: ${cartState.message}'),
+            );
+          }
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAddressSection(),
+                      const SizedBox(height: 24),
+                      _buildPaymentMethodSection(),
+                      const SizedBox(height: 24),
+                      _buildOrderSummary(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (_isPlacingOrder) buildLoadingIndicator(context: context)
-          ],
-        ),
+              if (_isPlacingOrder) buildLoadingIndicator(context: context)
+            ],
+          );
+        }),
       ),
       bottomNavigationBar: _buildBottomBar(),
     );
@@ -297,6 +315,78 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ].reduce((a, b) => a > b ? a : b);
   }
 
+  // void _handlePlaceOrder() async {
+  //   if (_isPlacingOrder) return;
+
+  //   if (_selectedAddressId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please select a delivery address')),
+  //     );
+  //     return;
+  //   }
+
+  //   final cartState = context.read<CartBloc>().state;
+  //   if (cartState is CartLoadedState) {
+  //     double subtotal = 0;
+  //     double totalDiscount = 0;
+
+  //     for (var item in cartState.items) {
+  //       if (item.price <= 0 || item.quantity <= 0) {
+  //         continue;
+  //       }
+
+  //       final basePrice = item.price * item.quantity;
+  //       subtotal += basePrice;
+
+  //       final maxDiscountPercent = calculateMaxDiscount(item);
+  //       final itemDiscount = basePrice * (maxDiscountPercent / 100);
+  //       totalDiscount += itemDiscount;
+  //     }
+
+  //     final finalAmount = subtotal - totalDiscount + _shippingCharge;
+
+  //     if (_selectedPaymentMethod == 'wallet') {
+  //       if (_walletBalance < finalAmount) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('Insufficient wallet balance'),
+  //           ),
+  //         );
+  //         return;
+  //       }
+
+  //       context.read<CheckoutBloc>().add(
+  //             WalletPaymentEvent(
+  //               addressId: _selectedAddressId!,
+  //               items: cartState.items,
+  //               totalAmount: finalAmount,
+  //             ),
+  //           );
+  //     } else if (_selectedPaymentMethod == 'cod') {
+  //       context.read<CheckoutBloc>().add(
+  //             InitiateCheckoutEvent(
+  //               addressId: _selectedAddressId!,
+  //               items: cartState.items,
+  //               totalAmount: finalAmount,
+  //               paymentMethod: 'cod',
+  //             ),
+  //           );
+  //     } else if (_selectedPaymentMethod == 'stripe') {
+  //       context.read<CheckoutBloc>().add(
+  //             InitiateCheckoutEvent(
+  //               addressId: _selectedAddressId!,
+  //               paymentMethod: 'stripe',
+  //               items: cartState.items,
+  //               totalAmount: finalAmount,
+  //             ),
+  //           );
+
+  //       await StripeService.instance
+  //           .makePayment(amount: finalAmount, context: context);
+  //     }
+  //   }
+  // }
+
   void _handlePlaceOrder() async {
     if (_isPlacingOrder) return;
 
@@ -308,35 +398,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final cartState = context.read<CartBloc>().state;
-    if (cartState is CartLoadedState) {
-      double subtotal = 0;
-      double totalDiscount = 0;
+    final couponState = context.read<CouponBloc>().state;
 
-      for (var item in cartState.items) {
-        if (item.price <= 0 || item.quantity <= 0) {
-          continue;
-        }
+    // Add detailed coupon state debugging
+    print('Current Coupon State: ${couponState.runtimeType}');
+    print('Coupon State Properties: $couponState');
 
-        final basePrice = item.price * item.quantity;
-        subtotal += basePrice;
+    if (cartState is! CartLoadedState) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cart not loaded properly')),
+      );
+      return;
+    }
 
-        final maxDiscountPercent = calculateMaxDiscount(item);
-        final itemDiscount = basePrice * (maxDiscountPercent / 100);
-        totalDiscount += itemDiscount;
+    try {
+      if (cartState.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your cart is empty')),
+        );
+        return;
       }
 
-      final finalAmount = subtotal - totalDiscount + _shippingCharge;
+      // Calculate subtotal from cart items
+      double subtotal =
+          cartState.items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
+      // Calculate coupon discount with additional debugging
+      double couponDiscount = 0.0;
+      print('Before coupon check - Discount: $couponDiscount');
+
+      if (couponState is CouponApplied) {
+        print('Entering coupon applied block');
+        print('Coupon State Details:');
+        print('  - Type: ${couponState.runtimeType}');
+        print('  - Discount Amount: ${couponState.discountAmount}');
+        couponDiscount = couponState.discountAmount;
+      } else {
+        print('Coupon not applied. Current state: ${couponState.runtimeType}');
+      }
+
+      print('After coupon check - Final Discount: $couponDiscount');
+
+      // Calculate final amount with coupon discount
+      final finalAmount = subtotal - couponDiscount + _shippingCharge;
+
+      // Debug prints
+      print('Order Summary:');
+      print('  - Subtotal: $subtotal');
+      print('  - Coupon Discount: $couponDiscount');
+      print('  - Shipping: $_shippingCharge');
+      print('  - Final Amount: $finalAmount');
       if (_selectedPaymentMethod == 'wallet') {
         if (_walletBalance < finalAmount) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Insufficient wallet balance'),
-            ),
+            const SnackBar(content: Text('Insufficient wallet balance')),
           );
           return;
         }
 
+        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               WalletPaymentEvent(
                 addressId: _selectedAddressId!,
@@ -345,6 +465,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'cod') {
+        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               InitiateCheckoutEvent(
                 addressId: _selectedAddressId!,
@@ -354,6 +475,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'stripe') {
+        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               InitiateCheckoutEvent(
                 addressId: _selectedAddressId!,
@@ -363,9 +485,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
 
-        await StripeService.instance
-            .makePayment(amount: finalAmount, context: context);
+        try {
+          await StripeService.instance.makePayment(
+            amount: finalAmount,
+            context: context,
+          );
+        } catch (e) {
+          setState(() => _isPlacingOrder = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Payment failed: ${e.toString()}')),
+          );
+        }
       }
+    } catch (e) {
+      setState(() => _isPlacingOrder = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
     }
   }
 }

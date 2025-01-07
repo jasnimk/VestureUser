@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_bloc.dart';
@@ -29,7 +30,6 @@ class _ShoppingPageState extends State<ShoppingPage> {
   void initState() {
     super.initState();
 
-    print('ShoppingPage initState called');
     context.read<ProductBloc>().add(FetchProductsEvent());
     context.read<ProductBloc>().add(InitializeFiltersEvent());
   }
@@ -60,6 +60,28 @@ class _ShoppingPageState extends State<ShoppingPage> {
       );
     }
   }
+
+  // Widget _buildVisualSearchBanner() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(8),
+  //     color: Theme.of(context).primaryColor.withValues(),
+  //     child: Row(
+  //       children: [
+  //         const Icon(Icons.camera_alt, color: Colors.white),
+  //         const SizedBox(width: 8),
+  //         Text('Visual Search Results', style: styling(color: Colors.white)),
+  //         const Spacer(),
+  //         TextButton(
+  //           onPressed: () {
+  //             setState(() => _isVisualSearchActive = false);
+  //             context.read<ProductBloc>().add(FetchProductsEvent());
+  //           },
+  //           child: Text('Clear', style: styling(color: Colors.white)),
+  //         ),
+  //       ],
+  //     ),
+  //   ).animate().slideY(begin: -50, end: 0, duration: 500.ms).fadeIn();
+  // }
 
   Widget _buildVisualSearchBanner() {
     return Container(

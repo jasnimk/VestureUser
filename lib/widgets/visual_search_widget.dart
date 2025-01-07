@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vesture_firebase_user/widgets/custom_button.dart';
+import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class VisualSearchModal extends StatefulWidget {
   final Function(File) onSearch;
@@ -49,35 +52,44 @@ class _VisualSearchModalState extends State<VisualSearchModal> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Choose Image',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Choose Image', style: headerStyling()),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Camera'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: customButton(
+                      height: 50,
+                      context: context,
+                      text: 'Camera',
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: FontAwesomeIcons.camera)
+                  // child: ElevatedButton.icon(
+                  //   onPressed: () => _pickImage(ImageSource.camera),
+                  //   icon: const Icon(Icons.camera_alt),
+                  //   label: const Text('Camera'),
+                  //   style: ElevatedButton.styleFrom(
+                  //     padding: const EdgeInsets.symmetric(vertical: 12),
+                  //   ),
+                  // ),
                   ),
-                ),
-              ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: customButton(
+                      height: 50,
+                      context: context,
+                      text: 'Camera',
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: FontAwesomeIcons.photoFilm)
+                  // child: ElevatedButton.icon(
+                  //   onPressed: () => _pickImage(ImageSource.gallery),
+                  //   icon: const Icon(Icons.photo_library),
+                  //   label: const Text('Gallery'),
+                  //   style: ElevatedButton.styleFrom(
+                  //     padding: const EdgeInsets.symmetric(vertical: 12),
+                  //   ),
+                  // ),
                   ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
