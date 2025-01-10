@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_bloc.dart';
 import 'package:vesture_firebase_user/bloc/product_details/bloc/product_details_event.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
-import 'package:vesture_firebase_user/utilities/color_utility.dart';
+import 'package:vesture_firebase_user/utilities&Services/color_utility.dart';
 import 'package:vesture_firebase_user/widgets/bottom_sheet_size.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 import 'package:vesture_firebase_user/widgets/price_display.dart';

@@ -9,7 +9,7 @@ import 'package:vesture_firebase_user/screens/address_page.dart';
 import 'package:vesture_firebase_user/screens/orders_page.dart';
 import 'package:vesture_firebase_user/screens/wallet_screen.dart';
 import 'package:vesture_firebase_user/screens/settings_page.dart';
-import 'package:vesture_firebase_user/utilities/profile_utils.dart';
+import 'package:vesture_firebase_user/utilities&Services/profile_utils.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
 class ProfilePage extends StatelessWidget {

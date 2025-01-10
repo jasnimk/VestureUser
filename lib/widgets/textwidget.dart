@@ -164,3 +164,67 @@ TextStyle subHeaderStyling({
     decoration: decoration,
   );
 }
+
+class CustomTextField extends StatelessWidget {
+  final String? labelText;
+  final String? hintText;
+  final IconData? prefixIcon;
+  final IconData? suffixIcon;
+  final TextEditingController? controller;
+  final bool obscureText;
+  final TextInputType keyboardType;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final void Function()? onSuffixIconPressed;
+
+  const CustomTextField({
+    Key? key,
+    this.labelText,
+    this.hintText,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.controller,
+    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.validator,
+    this.onChanged,
+    this.onSuffixIconPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      validator: validator,
+      onChanged: onChanged,
+      style: styling(),
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        hintStyle: styling(),
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        suffixIcon: suffixIcon != null
+            ? IconButton(
+                icon: Icon(suffixIcon),
+                onPressed: onSuffixIconPressed,
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.blue, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+      ),
+    );
+  }
+}

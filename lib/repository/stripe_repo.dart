@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/checkout/bloc/checkout_event.dart';
-import 'package:vesture_firebase_user/utilities/keysApi.dart';
+import 'package:vesture_firebase_user/utilities&Services/keysApi.dart';
 
 class StripeService {
   StripeService._();
@@ -25,7 +25,7 @@ class StripeService {
         paymentIntentClientSecret: paymentIntentClientSecret,
         merchantDisplayName: 'user',
       ));
-      await _processPayment(context, paymentIntentClientSecret);
+      await _processPayment(context, paymentIntentClientSecret, amount);
     } catch (e) {
       print(e);
     }
@@ -60,10 +60,8 @@ class StripeService {
     return calculatedAmount.toString();
   }
 
-  Future<void> _processPayment(
-    BuildContext context,
-    String paymentIntentClientSecret,
-  ) async {
+  Future<void> _processPayment(BuildContext context,
+      String paymentIntentClientSecret, double amount) async {
     try {
       await Stripe.instance.presentPaymentSheet();
 
@@ -72,7 +70,7 @@ class StripeService {
 
       // Notify the bloc that payment was successful
       context.read<CheckoutBloc>().add(
-            StripePaymentSuccessEvent(paymentIntentId),
+            StripePaymentSuccessEvent(paymentIntentId, amount),
           );
     } catch (e) {
       print(e);

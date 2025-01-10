@@ -11,7 +11,6 @@ void showSortBottomSheet(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Sort By',
@@ -36,16 +35,6 @@ void showSortBottomSheet(
               ),
               onTap: () {
                 onSortSelected('Price: highest to low');
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text(
-                'Customer Review',
-                style: styling(),
-              ),
-              onTap: () {
-                onSortSelected('Rating: highest first');
                 Navigator.pop(context);
               },
             ),

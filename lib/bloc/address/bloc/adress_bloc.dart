@@ -30,8 +30,17 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
       AddressLoadEvent event, Emitter<AddressState> emit) async {
     try {
       emit(AddressLoading());
+      // Make sure userId is not empty
+      if (userId.isEmpty) {
+        emit(AddressError('User ID is not valid'));
+        return;
+      }
       final addresses = await _addressRepository.loadAddresses(userId);
-      emit(AddressLoaded(addresses));
+      if (addresses.isEmpty) {
+        emit(AddressLoaded([])); // Emit empty list instead of error
+      } else {
+        emit(AddressLoaded(addresses));
+      }
     } catch (e) {
       emit(AddressError(e.toString()));
     }

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/cart/bloc/cart_state.dart';
@@ -14,6 +12,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<RemoveFromCartEvent>(_onRemoveFromCart);
     on<ClearCartEvent>(_onClearCart);
   }
+
+  /// Handles loading cart items and calculates the total cart amount.
   Future<void> _onLoadCart(LoadCartEvent event, Emitter<CartState> emit) async {
     try {
       emit(CartLoadingState());
@@ -28,6 +28,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
   }
 
+  /// Updates the quantity of a cart item and reloads the cart.
   Future<void> _onUpdateCartItemQuantity(
       UpdateCartItemQuantityEvent event, Emitter<CartState> emit) async {
     try {
@@ -44,12 +45,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
   }
 
+  /// Removes an item from the cart and updates the cart state.
   Future<void> _onRemoveFromCart(
       RemoveFromCartEvent event, Emitter<CartState> emit) async {
     try {
-      log('remove funcyion');
       emit(CartLoadingState());
-      //await Future.delayed(Duration(milliseconds: 200));
 
       await cartRepository.removeCartItem(
         cartItemId: event.cartItem.id,
@@ -60,13 +60,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         0.0,
         (sum, item) => sum + (item.effectivePrice * (item.quantity)),
       );
-      emit(CartLoadedState(items: items, totalAmount: totalAmount));
-      //add(LoadCartEvent());
+      emit(CartLoadedState(
+          items: items, totalAmount: totalAmount, isUpdating: true));
     } catch (e) {
       emit(CartErrorState(message: e.toString()));
     }
   }
 
+  /// Clears all items from the cart and resets the cart state.
   Future<void> _onClearCart(
       ClearCartEvent event, Emitter<CartState> emit) async {
     try {

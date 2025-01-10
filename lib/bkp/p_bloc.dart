@@ -1,31 +1,127 @@
+// import 'dart:io';
+
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:vesture_firebase_user/models/category_model.dart';
+// import 'package:vesture_firebase_user/models/product_filter.dart';
 // import 'package:vesture_firebase_user/models/product_model.dart';
+// import 'package:vesture_firebase_user/repository/product_repo.dart';
 // import 'product_event.dart';
 // import 'product_state.dart';
 
 // class ProductBloc extends Bloc<ProductEvent, ProductState> {
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+//   final ProductRepository _productRepository;
+//   List<ProductModel> _originalProducts = [];
+//   ProductFilter? _currentFilter;
+//   List<ProductModel> _searchResults = [];
+//   bool _isSearchActive = false;
 
-//   ProductBloc() : super(ProductInitialState()) {
+//   ProductBloc({required ProductRepository productRepository})
+//       : _productRepository = productRepository,
+//         super(ProductInitialState()) {
 //     on<FetchProductsEvent>(_onFetchProducts);
 //     on<FetchProductsByCategoryEvent>(_onFetchProductsByCategory);
-//     on<FetchCategoriesEvent>(_onFetchCategories);
 //     on<SearchProductsEvent>(_onSearchProducts);
-//   }
 
-//   Future<void> _onFetchCategories(
-//       FetchCategoriesEvent event, Emitter<ProductState> emit) async {
+//     on<SortProductsEvent>(_onSortProducts);
+
+//     on<InitializeFiltersEvent>(_onInitializeFilters);
+//     on<ApplyFiltersEvent>(_onApplyFilters);
+//     on<ClearFiltersEvent>(_onClearFilters);
+//     on<UpdateFilterEvent>(_onUpdateFilter);
+//     on<VisualSearchEvent>(_onVisualSearch);
+//     on<FetchProductsByBrandEvent>(_onFetchProductsByBrand);
+//     on<FetchBrandsEvent>(_onFetchBrands);
+//   }
+//   Future<void> _onSearchProducts(
+//       SearchProductsEvent event, Emitter<ProductState> emit) async {
 //     try {
 //       emit(ProductLoadingState());
+//       final products = await _productRepository.searchProducts(event.query);
+//       _searchResults = products;
+//       _isSearchActive = true;
+//       emit(ProductLoadedState(
+//           products: products,
+//           filter: _currentFilter,
+//           isSearchActive: true // Add this flag to track search state
+//           ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
 
-//       final categorySnapshot = await _firestore.collection('categories').get();
-//       List<CategoryModel> categories = categorySnapshot.docs
-//           .map((doc) => CategoryModel.fromFirestore(doc))
-//           .toList();
+//   Future<void> _onSortProducts(
+//       SortProductsEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       final sortedProducts = await _productRepository.sortProducts(
+//         products: event.products,
+//         sortOption: event.sortOption,
+//       );
 
-//       emit(ProductCategoriesLoadedState(categories: categories));
+//       emit(ProductLoadedState(products: sortedProducts));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onInitializeFilters(
+//       InitializeFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       if (_originalProducts.isEmpty) {
+//         _originalProducts = await _productRepository.fetchProducts();
+//       }
+//       _currentFilter =
+//           await _productRepository.getInitialFilter(_originalProducts);
+//       emit(ProductLoadedState(
+//         products: _originalProducts,
+//         filter: _currentFilter,
+//       ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onClearFilters(
+//       ClearFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       _currentFilter =
+//           await _productRepository.getInitialFilter(_originalProducts);
+//       emit(ProductLoadedState(
+//         products: _originalProducts,
+//         filter: _currentFilter,
+//       ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onUpdateFilter(
+//       UpdateFilterEvent event, Emitter<ProductState> emit) async {
+//     _currentFilter = event.updatedFilter;
+//     if (state is ProductLoadedState) {
+//       emit(ProductLoadedState(
+//         products: (state as ProductLoadedState).products,
+//         filter: _currentFilter,
+//       ));
+//     }
+//   }
+
+//   Future<void> _onFetchProductsByBrand(
+//       FetchProductsByBrandEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       emit(ProductLoadingState());
+//       final products =
+//           await _productRepository.fetchProductsByBrand(event.brandId);
+//       _originalProducts = List.from(products);
+//       emit(ProductLoadedState(products: products));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onFetchBrands(
+//       FetchBrandsEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       final brands = await _productRepository.fetchBrands();
+//       emit(BrandsLoadedState(brands: brands));
 //     } catch (e) {
 //       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
@@ -33,305 +129,289 @@
 
 //   Future<void> _onFetchProducts(
 //       FetchProductsEvent event, Emitter<ProductState> emit) async {
+//     print('Fetch Products Event Triggered'); // Add this line
+
 //     try {
 //       emit(ProductLoadingState());
-//       final categoriesSnapshot = await _firestore
-//           .collection('categories')
-//           .where('isActive', isEqualTo: true)
-//           .get();
+//       final products = await _productRepository.fetchProducts();
 
-//       // Get IDs of active categories
-//       final activeParentCategoryIds = categoriesSnapshot.docs
-//           .where((doc) => doc.data()['parentCategoryId'] == null)
-//           .map((doc) => doc.id)
-//           .toList();
+//       _originalProducts = List.from(products);
+//       emit(ProductLoadedState(products: products));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
 
-//       final activeSubCategoryIds = categoriesSnapshot.docs
-//           .where((doc) => doc.data()['parentCategoryId'] != null)
-//           .map((doc) => doc.id)
-//           .toList();
-
-//       final productsStream = _firestore
-//           .collection('products')
-//           .where('isActive', isEqualTo: true)
-//           .where('parentCategoryId',
-//               whereIn: activeParentCategoryIds + activeSubCategoryIds)
-//           .snapshots();
-//       await for (var snapshot in productsStream) {
-//         List<ProductModel> products = [];
-
-//         for (var productDoc in snapshot.docs) {
-//           final variantsSnapshot = await _firestore
-//               .collection('variants')
-//               .where('productId', isEqualTo: productDoc.id)
-//               .get();
-
-//           List<Variant> variants = [];
-//           for (var variantDoc in variantsSnapshot.docs) {
-//             final sizeStocksSnapshot = await _firestore
-//                 .collection('sizes_and_stocks')
-//                 .where('variantId', isEqualTo: variantDoc.id)
-//                 .get();
-
-//             List<SizeStockModel> sizeStocks = sizeStocksSnapshot.docs
-//                 .map((doc) => SizeStockModel.fromMap(doc.data(), doc.id))
-//                 .toList();
-
-//             variants.add(
-//                 Variant.fromMap(variantDoc.data(), variantDoc.id, sizeStocks));
-//           }
-
-//           String? brandName;
-//           final brandDoc = await _firestore
-//               .collection('brands')
-//               .doc(productDoc.data()['brandId'])
-//               .get();
-
-//           brandName = brandDoc.data()?['name'] ??
-//               brandDoc.data()?['brandName'] ??
-//               brandDoc.data()?['title'] ??
-//               'Unknown Brand';
-
-//           final product =
-//               ProductModel.fromFirestore(productDoc, variants, brandName);
-
-//           products.add(product);
-//         }
-
-//         emit(ProductLoadedState(products: products));
+//   Future<void> _onApplyFilters(
+//       ApplyFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       if (_originalProducts.isEmpty) {
+//         final products = await _productRepository.fetchProducts();
+//         _originalProducts = List.from(products);
 //       }
+
+//       final filteredProducts = await _productRepository.applyFilters(
+//         _originalProducts,
+//         event.filter,
+//       );
+
+//       emit(ProductLoadedState(
+//         products: filteredProducts,
+//         filter: event.filter,
+//       ));
 //     } catch (e) {
 //       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
 //   }
 
 //   Future<void> _onFetchProductsByCategory(
-//     FetchProductsByCategoryEvent event,
-//     Emitter<ProductState> emit,
-//   ) async {
+//       FetchProductsByCategoryEvent event, Emitter<ProductState> emit) async {
 //     try {
 //       emit(ProductLoadingState());
-
-//       final querySnapshotParentCategory = await _firestore
-//           .collection('products')
-//           .where('isActive', isEqualTo: true)
-//           .where('parentCategoryId', isEqualTo: event.categoryId)
-//           .get();
-
-//       final querySnapshotSubCategory = await _firestore
-//           .collection('products')
-//           .where('isActive', isEqualTo: true)
-//           .where('subCategoryId', isEqualTo: event.categoryId)
-//           .get();
-
-//       final combinedResults = [
-//         ...querySnapshotParentCategory.docs,
-//         ...querySnapshotSubCategory.docs,
-//       ];
-
-//       print('Fetched products: ${combinedResults.length}');
-//       print('Fetching products for category ID: ${event.categoryId}');
-
-//       List<ProductModel> products = [];
-
-//       for (var doc in combinedResults) {
-//         final variantsSnapshot = await _firestore
-//             .collection('variants')
-//             .where('productId', isEqualTo: doc.id)
-//             .get();
-
-//         List<Variant> variants = [];
-//         for (var variantDoc in variantsSnapshot.docs) {
-//           final sizeStocksSnapshot = await _firestore
-//               .collection('sizes_and_stocks')
-//               .where('variantId', isEqualTo: variantDoc.id)
-//               .get();
-
-//           List<SizeStockModel> sizeStocks = sizeStocksSnapshot.docs
-//               .map((doc) => SizeStockModel.fromMap(doc.data(), doc.id))
-//               .toList();
-
-//           variants.add(
-//               Variant.fromMap(variantDoc.data(), variantDoc.id, sizeStocks));
-//         }
-
-//         String? brandName;
-//         if (doc.data()['brandId'] != null) {
-//           try {
-//             final brandDoc = await _firestore
-//                 .collection('brands')
-//                 .doc(doc.data()['brandId'])
-//                 .get();
-
-//             brandName = brandDoc.data()?['name'] ?? 'Unknown Brand';
-//           } catch (e) {
-//             print('Error fetching brand: $e');
-//             brandName = 'Unknown Brand';
-//           }
-//         }
-
-//         final product = ProductModel.fromFirestore(doc, variants, brandName);
-//         products.add(product);
-//       }
-
+//       final products =
+//           await _productRepository.fetchProductsByCategory(event.categoryId);
 //       emit(ProductLoadedState(products: products));
 //     } catch (e) {
 //       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
+//   }
+
+//   Future<void> _onVisualSearch(
+//       VisualSearchEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       emit(VisualSearchLoadingState());
+
+//       final products = await _productRepository.searchByImage(event.image);
+
+//       emit(VisualSearchLoadedState(products: products));
+//     } catch (e) {
+//       emit(VisualSearchErrorState(errorMessage: e.toString()));
+//     }
+//   }
+// }
+
+// import 'dart:io';
+
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:vesture_firebase_user/models/product_filter.dart';
+// import 'package:vesture_firebase_user/models/product_model.dart';
+// import 'package:vesture_firebase_user/repository/product_repo.dart';
+// import 'product_event.dart';
+// import 'product_state.dart';
+
+// class ProductBloc extends Bloc<ProductEvent, ProductState> {
+//   final ProductRepository _productRepository;
+//   List<ProductModel> _originalProducts = [];
+//   ProductFilter? _currentFilter;
+//   List<ProductModel> _searchResults = [];
+//   bool _isSearchActive = false;
+//   String _searchQuery = '';
+
+//   ProductBloc({required ProductRepository productRepository})
+//       : _productRepository = productRepository,
+//         super(ProductInitialState()) {
+//     on<FetchProductsEvent>(_onFetchProducts);
+//     on<FetchProductsByCategoryEvent>(_onFetchProductsByCategory);
+//     on<SearchProductsEvent>(_onSearchProducts);
+//     on<SortProductsEvent>(_onSortProducts);
+//     on<InitializeFiltersEvent>(_onInitializeFilters);
+//     on<ApplyFiltersEvent>(_onApplyFilters);
+//     on<ClearFiltersEvent>(_onClearFilters);
+//     on<UpdateFilterEvent>(_onUpdateFilter);
+//     on<VisualSearchEvent>(_onVisualSearch);
+//     on<FetchProductsByBrandEvent>(_onFetchProductsByBrand);
+//     on<FetchBrandsEvent>(_onFetchBrands);
 //   }
 
 //   Future<void> _onSearchProducts(
-//       SearchProductsEvent event, Emitter emit) async {
+//       SearchProductsEvent event, Emitter<ProductState> emit) async {
 //     try {
-//       print('Search Event Received: ${event.query}');
+//       // If search query hasn't changed, don't search again
+//       if (_searchQuery == event.query) {
+//         return; // Skip if the query hasn't changed
+//       }
+
+//       _searchQuery = event.query; // Update the query
+
 //       emit(ProductLoadingState());
-//       final searchQuery = event.query.toLowerCase().trim();
-//       print('Normalized Search Query: $searchQuery');
-//       String lowerCaseSearchQuery = searchQuery.toLowerCase();
-//       // Initial search with exact match on searchKeywords
-//       var querySnapshot = await FirebaseFirestore.instance
-//           .collection('products')
-//           .where('searchKeywords', arrayContains: lowerCaseSearchQuery)
-//           .where('isActive', isEqualTo: true)
-//           .get();
-
-//       print('Query Snapshot Length: ${querySnapshot.docs.length}');
-//       querySnapshot.docs.forEach((doc) {
-//         print('Found product: ${doc.data()}');
-//       });
-//       if (querySnapshot.docs.isEmpty) {
-//         print('No products found for the search query: $searchQuery');
-//       }
-//       // If no exact matches, perform a more comprehensive search
-//       if (querySnapshot.docs.isEmpty) {
-//         // Fetch all active products
-//         querySnapshot = await _firestore
-//             .collection('products')
-//             .where('isActive', isEqualTo: true)
-//             .get();
-
-//         final filteredDocs = querySnapshot.docs.where((doc) {
-//           final data = doc.data();
-
-//           final searchKeywords = (data['searchKeywords'] as List?)
-//                   ?.map((k) => k.toString().toLowerCase()) ??
-//               [];
-//           if (searchKeywords.any((keyword) => keyword.contains(searchQuery))) {
-//             return true;
-//           }
-
-//           return (data['productName'] as String?)
-//                       ?.toLowerCase()
-//                       .contains(searchQuery) ==
-//                   true ||
-//               (data['description'] as String?)
-//                       ?.toLowerCase()
-//                       .contains(searchQuery) ==
-//                   true;
-//         }).toList();
-
-//         List<ProductModel> products = [];
-//         for (var doc in filteredDocs) {
-//           final variantsSnapshot = await _firestore
-//               .collection('variants')
-//               .where('productId', isEqualTo: doc.id)
-//               .get();
-
-//           List<Variant> variants =
-//               await _fetchVariantsWithSizeStocks(variantsSnapshot);
-//           String? brandName = await _fetchBrandName(doc);
-//           final product = ProductModel.fromFirestore(doc, variants, brandName);
-//           products.add(product);
-//         }
-
-//         emit(ProductLoadedState(products: products));
-//         return;
-//       }
-
-//       List<ProductModel> products = [];
-//       for (var doc in querySnapshot.docs) {
-//         final variantsSnapshot = await _firestore
-//             .collection('variants')
-//             .where('productId', isEqualTo: doc.id)
-//             .get();
-
-//         List<Variant> variants =
-//             await _fetchVariantsWithSizeStocks(variantsSnapshot);
-//         String? brandName = await _fetchBrandName(doc);
-//         final product = ProductModel.fromFirestore(doc, variants, brandName);
-//         products.add(product);
-//       }
-
-//       emit(ProductLoadedState(products: products));
+//       final products = await _productRepository.searchProducts(event.query);
+//       _searchResults = products;
+//       _isSearchActive = true;
+//       emit(ProductLoadedState(
+//         products: products,
+//         filter: _currentFilter,
+//         isSearchActive: true,
+//       ));
 //     } catch (e) {
-//       print('Search Error: $e');
 //       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
 //   }
 
-//   Future<List<Variant>> _fetchVariantsWithSizeStocks(
-//       QuerySnapshot variantsSnapshot) async {
-//     List<Variant> variants = [];
-//     for (var variantDoc in variantsSnapshot.docs) {
-//       final sizeStocksSnapshot = await _firestore
-//           .collection('sizes_and_stocks')
-//           .where('variantId', isEqualTo: variantDoc.id)
-//           .get();
-
-//       List<SizeStockModel> sizeStocks = sizeStocksSnapshot.docs
-//           .map((doc) => SizeStockModel.fromMap(doc.data(), doc.id))
-//           .toList();
-
-//       variants.add(
-//         Variant.fromMap(variantDoc.data() as Map<String, dynamic>,
-//             variantDoc.id, sizeStocks),
+//   Future<void> _onSortProducts(
+//       SortProductsEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       final sortedProducts = await _productRepository.sortProducts(
+//         products: event.products,
+//         sortOption: event.sortOption,
 //       );
+
+//       emit(ProductLoadedState(products: sortedProducts));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
-//     return variants;
 //   }
 
-//   Future<String?> _fetchBrandName(DocumentSnapshot doc) async {
-//     final docData = doc.data() as Map<String, dynamic>?;
-//     String? brandName;
-
-//     if (docData?['brandId'] != null) {
-//       try {
-//         final brandDoc = await _firestore
-//             .collection('brands')
-//             .doc(docData!['brandId'])
-//             .get();
-
-//         brandName = brandDoc.data()?['name'] ??
-//             brandDoc.data()?['brandName'] ??
-//             'Unknown Brand';
-//       } catch (e) {
-//         print('Error fetching brand: $e');
-//         brandName = 'Unknown Brand';
+//   Future<void> _onInitializeFilters(
+//       InitializeFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       if (_originalProducts.isEmpty) {
+//         _originalProducts = await _productRepository.fetchProducts();
 //       }
+//       _currentFilter =
+//           await _productRepository.getInitialFilter(_originalProducts);
+//       emit(ProductLoadedState(
+//         products: _originalProducts,
+//         filter: _currentFilter,
+//       ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
 //     }
-
-//     return brandName;
 //   }
 
-//   Future<List<QueryDocumentSnapshot>> _performBroaderSearch(
-//       String query) async {
-//     final additionalSearchSnapshot = await _firestore
-//         .collection('products')
-//         .where('isActive', isEqualTo: true)
-//         .get();
+//   Future<void> _onClearFilters(
+//       ClearFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       // Only apply clear filter if it's necessary
+//       if (_currentFilter == null) return;
 
-//     return additionalSearchSnapshot.docs.where((doc) {
-//       final data = doc.data() as Map<String, dynamic>?;
-//       return _matchesSearch(data, query);
-//     }).toList();
+//       _currentFilter =
+//           await _productRepository.getInitialFilter(_originalProducts);
+//       emit(ProductLoadedState(
+//         products: _originalProducts,
+//         filter: _currentFilter,
+//       ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
 //   }
 
-//   bool _matchesSearch(Map<String, dynamic>? data, String query) {
-//     if (data == null) return false;
-//     return (data['productName'] as String?)?.toLowerCase().contains(query) ==
-//             true ||
-//         (data['description'] as String?)?.toLowerCase().contains(query) ==
-//             true ||
-//         (data['brandName'] as String?)?.toLowerCase().contains(query) == true;
+//   Future<void> _onUpdateFilter(
+//       UpdateFilterEvent event, Emitter<ProductState> emit) async {
+//     // Only update filter if it's different from the current one
+//     if (_currentFilter != event.updatedFilter) {
+//       _currentFilter = event.updatedFilter;
+//       emit(ProductLoadedState(
+//         products: (state as ProductLoadedState).products,
+//         filter: _currentFilter,
+//       ));
+//     }
+//   }
+
+//   Future<void> _onFetchProductsByBrand(
+//       FetchProductsByBrandEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       emit(ProductLoadingState());
+//       final products =
+//           await _productRepository.fetchProductsByBrand(event.brandId);
+//       _originalProducts = List.from(products);
+//       emit(ProductLoadedState(products: products));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onFetchBrands(
+//       FetchBrandsEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       final brands = await _productRepository.fetchBrands();
+//       emit(BrandsLoadedState(brands: brands));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onFetchProducts(
+//       FetchProductsEvent event, Emitter<ProductState> emit) async {
+//     print('Fetch Products Event Triggered');
+
+//     try {
+//       emit(ProductLoadingState());
+//       final products = await _productRepository.fetchProducts();
+
+//       if (!ListEquality().equals(_originalProducts, products)) {
+//         _originalProducts = List.from(products);
+//         emit(ProductLoadedState(products: products));
+//       }
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onApplyFilters(
+//       ApplyFiltersEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       // Avoid unnecessary fetch if products and filter are already available
+//       if (_originalProducts.isEmpty) {
+//         final products = await _productRepository.fetchProducts();
+//         _originalProducts = List.from(products);
+//       }
+
+//       // Apply the filter only if there are changes
+//       final filteredProducts = await _productRepository.applyFilters(
+//         _originalProducts,
+//         event.filter,
+//       );
+
+//       // Check if the filter is already applied, avoid re-applying it
+//       if (_currentFilter != event.filter) {
+//         _currentFilter = event.filter;
+//       }
+
+//       // Emit the filtered state
+//       emit(ProductLoadedState(
+//         products: filteredProducts,
+//         filter: _currentFilter,
+//       ));
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onFetchProductsByCategory(
+//       FetchProductsByCategoryEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       // Check if the products are already fetched for this category
+//       if (_originalProducts.isEmpty) {
+//         emit(ProductLoadingState());
+//         final products =
+//             await _productRepository.fetchProductsByCategory(event.categoryId);
+//         _originalProducts = List.from(products);
+//         emit(ProductLoadedState(products: products));
+//       } else {
+//         // Avoid re-fetching if already fetched
+//         // Filter products based on categoryId or subcategoryId
+//         final filteredProducts = _originalProducts.where((product) {
+//           return product.parentCategoryId == event.categoryId ||
+//               product.subCategoryId == event.categoryId;
+//         }).toList();
+//         emit(ProductLoadedState(products: filteredProducts));
+//       }
+//     } catch (e) {
+//       emit(ProductErrorState(errorMessage: e.toString()));
+//     }
+//   }
+
+//   Future<void> _onVisualSearch(
+//       VisualSearchEvent event, Emitter<ProductState> emit) async {
+//     try {
+//       emit(VisualSearchLoadingState());
+
+//       final products = await _productRepository.searchByImage(event.image);
+
+//       emit(VisualSearchLoadedState(products: products));
+//     } catch (e) {
+//       emit(VisualSearchErrorState(errorMessage: e.toString()));
+//     }
 //   }
 // }

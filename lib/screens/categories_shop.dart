@@ -41,7 +41,7 @@ class _CategoryProductDetailsScreenState
       body: Column(
         children: [
           CustomSearch(
-            categoryId: widget.categoryId, // Pass the categoryId here
+            categoryId: widget.categoryId,
           ),
           // customSearchField(context, categor: categoryModel),
           customFilterSortRow(

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vesture_firebase_user/models/offer_model.dart';
-import 'package:vesture_firebase_user/utilities/offer_calculator.dart';
+import 'package:vesture_firebase_user/utilities&Services/offer_calculator.dart';
 
 class ProductModel {
   String? id;

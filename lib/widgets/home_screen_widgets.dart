@@ -9,6 +9,7 @@ import 'package:vesture_firebase_user/bloc/home/bloc/home_state.dart';
 import 'package:vesture_firebase_user/models/brand_model.dart';
 import 'package:vesture_firebase_user/screens/cart_page.dart';
 import 'package:vesture_firebase_user/screens/categories_shop.dart';
+import 'package:vesture_firebase_user/screens/shopping_page.dart';
 import 'package:vesture_firebase_user/widgets/custom_snackbar.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
@@ -132,13 +133,16 @@ class HomeScreenWidgets {
                 child: FadeInAnimation(
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) => CategoryProductDetailsScreen(
-                            categoryId: category.id!,
-                          ),
-                        ),
-                      );
+                      navigateToCategoryProducts(
+                          context, category.id!, category.name!);
+
+                      // Navigator.of(context).push(
+                      //   MaterialPageRoute(
+                      //     builder: (ctx) => CategoryProductDetailsScreen(
+                      //       categoryId: category.id!,
+                      //     ),
+                      //   ),
+                      // );
                     },
                     child: Card(
                       elevation: 0,
@@ -250,7 +254,7 @@ class HomeScreenWidgets {
             itemCount: state.brands.length,
             itemBuilder: (context, index) {
               final brand = state.brands[index];
-              return _buildBrandItem(brand, index);
+              return _buildBrandItem(brand, index, context);
             },
           ),
         ),
@@ -258,7 +262,8 @@ class HomeScreenWidgets {
     );
   }
 
-  static Widget _buildBrandItem(BrandModel brand, int index) {
+  static Widget _buildBrandItem(
+      BrandModel brand, int index, BuildContext context) {
     return AnimationConfiguration.staggeredList(
       position: index,
       duration: const Duration(milliseconds: 500),
@@ -282,7 +287,7 @@ class HomeScreenWidgets {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildBrandIcon(brand),
+                _buildBrandIcon(brand, context),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -305,7 +310,7 @@ class HomeScreenWidgets {
     );
   }
 
-  static Widget _buildBrandIcon(BrandModel brand) {
+  static Widget _buildBrandIcon(BrandModel brand, BuildContext context) {
     if (brand.brandIcon == null || brand.brandIcon!.isEmpty) {
       return Container(
         width: 60,
@@ -319,26 +324,31 @@ class HomeScreenWidgets {
     }
 
     try {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.memory(
-          base64Decode(brand.brandIcon!),
-          width: 60,
-          height: 60,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            print('Error loading brand image for ${brand.brandName}');
-            return Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child:
-                  Icon(Icons.error_outline, size: 30, color: Colors.grey[400]),
-            );
-          },
+      return GestureDetector(
+        onTap: () {
+          navigateToBrandProducts(context, brand.id, brand.brandName);
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(
+            base64Decode(brand.brandIcon!),
+            width: 60,
+            height: 60,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              print('Error loading brand image for ${brand.brandName}');
+              return Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.error_outline,
+                    size: 30, color: Colors.grey[400]),
+              );
+            },
+          ),
         ),
       );
     } catch (e) {

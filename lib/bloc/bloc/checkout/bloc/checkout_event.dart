@@ -36,7 +36,8 @@ class ProcessRazorpayPaymentEvent extends CheckoutEvent {
 
 class StripePaymentSuccessEvent extends CheckoutEvent {
   final String paymentIntentId;
-  StripePaymentSuccessEvent(this.paymentIntentId);
+  final double totalAmount;
+  StripePaymentSuccessEvent(this.paymentIntentId, this.totalAmount);
 }
 
 class WalletPaymentEvent extends CheckoutEvent {

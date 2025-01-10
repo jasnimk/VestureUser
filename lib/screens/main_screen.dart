@@ -5,6 +5,7 @@ import 'package:vesture_firebase_user/screens/favorite_page.dart';
 import 'package:vesture_firebase_user/screens/home_screen.dart';
 import 'package:vesture_firebase_user/screens/list_categories.dart';
 import 'package:vesture_firebase_user/screens/profile_page.dart';
+import 'package:vesture_firebase_user/screens/shopping_page.dart';
 
 class MainScreen extends StatefulWidget {
   final String userId;
@@ -28,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
 
   late final List<Widget> _pages = [
     HomeScreen(),
-    const ShopCategories(),
+    ShoppingPage(),
     CartScreen(),
     const FavoritesPage(),
     ProfilePage(),

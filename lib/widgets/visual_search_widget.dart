@@ -59,37 +59,21 @@ class _VisualSearchModalState extends State<VisualSearchModal> {
             children: [
               Expanded(
                   child: customButton(
+                      fontSize: 12,
                       height: 50,
                       context: context,
                       text: 'Camera',
                       onPressed: () => _pickImage(ImageSource.camera),
-                      icon: FontAwesomeIcons.camera)
-                  // child: ElevatedButton.icon(
-                  //   onPressed: () => _pickImage(ImageSource.camera),
-                  //   icon: const Icon(Icons.camera_alt),
-                  //   label: const Text('Camera'),
-                  //   style: ElevatedButton.styleFrom(
-                  //     padding: const EdgeInsets.symmetric(vertical: 12),
-                  //   ),
-                  // ),
-                  ),
+                      icon: FontAwesomeIcons.camera)),
               const SizedBox(width: 16),
               Expanded(
                   child: customButton(
+                      fontSize: 12,
                       height: 50,
                       context: context,
-                      text: 'Camera',
+                      text: 'Gallery',
                       onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: FontAwesomeIcons.photoFilm)
-                  // child: ElevatedButton.icon(
-                  //   onPressed: () => _pickImage(ImageSource.gallery),
-                  //   icon: const Icon(Icons.photo_library),
-                  //   label: const Text('Gallery'),
-                  //   style: ElevatedButton.styleFrom(
-                  //     padding: const EdgeInsets.symmetric(vertical: 12),
-                  //   ),
-                  // ),
-                  ),
+                      icon: FontAwesomeIcons.photoFilm)),
             ],
           ),
           const SizedBox(height: 16),

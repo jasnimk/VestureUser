@@ -48,3 +48,10 @@ class VisualSearchErrorState extends ProductState {
 
   VisualSearchErrorState({required this.errorMessage});
 }
+
+// In product_state.dart, add this new state:
+class BrandsLoadedState extends ProductState {
+  final List<Map<String, String>> brands;
+
+  BrandsLoadedState({required this.brands});
+}

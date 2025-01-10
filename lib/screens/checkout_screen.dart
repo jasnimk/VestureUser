@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_event.dart';
@@ -15,7 +17,7 @@ import 'package:vesture_firebase_user/bloc/bloc/coupon/bloc/coupon_state.dart';
 import 'package:vesture_firebase_user/models/cart_item.dart';
 import 'package:vesture_firebase_user/repository/stripe_repo.dart';
 import 'package:vesture_firebase_user/repository/wallet_repo.dart';
-import 'package:vesture_firebase_user/screens/select_address.dart';
+import 'package:vesture_firebase_user/screens/address_page.dart';
 import 'package:vesture_firebase_user/screens/success.dart';
 import 'package:vesture_firebase_user/widgets/checkout_widget.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
@@ -40,12 +42,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AddressBloc>().add(AddressLoadEvent());
-    context.read<CartBloc>().add(LoadCartEvent());
-    context.read<CouponBloc>().add(LoadAvailableCouponsEvent());
-    // Add this line
-
-    _loadWalletBalance();
+    Future.microtask(() {
+      context.read<AddressBloc>().add(AddressLoadEvent());
+      context.read<CartBloc>().add(LoadCartEvent());
+      context.read<CouponBloc>().add(LoadAvailableCouponsEvent());
+      _loadWalletBalance();
+    });
   }
 
   Future<void> _loadWalletBalance() async {
@@ -166,7 +168,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         final selectedAddr = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => AddressSelectionPage(
+                            builder: (_) => ShippingAddressesPage(
+                              isSelectionMode: true,
                               selectedAddressId: _selectedAddressId,
                             ),
                           ),
@@ -315,78 +318,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ].reduce((a, b) => a > b ? a : b);
   }
 
-  // void _handlePlaceOrder() async {
-  //   if (_isPlacingOrder) return;
-
-  //   if (_selectedAddressId == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Please select a delivery address')),
-  //     );
-  //     return;
-  //   }
-
-  //   final cartState = context.read<CartBloc>().state;
-  //   if (cartState is CartLoadedState) {
-  //     double subtotal = 0;
-  //     double totalDiscount = 0;
-
-  //     for (var item in cartState.items) {
-  //       if (item.price <= 0 || item.quantity <= 0) {
-  //         continue;
-  //       }
-
-  //       final basePrice = item.price * item.quantity;
-  //       subtotal += basePrice;
-
-  //       final maxDiscountPercent = calculateMaxDiscount(item);
-  //       final itemDiscount = basePrice * (maxDiscountPercent / 100);
-  //       totalDiscount += itemDiscount;
-  //     }
-
-  //     final finalAmount = subtotal - totalDiscount + _shippingCharge;
-
-  //     if (_selectedPaymentMethod == 'wallet') {
-  //       if (_walletBalance < finalAmount) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(
-  //             content: Text('Insufficient wallet balance'),
-  //           ),
-  //         );
-  //         return;
-  //       }
-
-  //       context.read<CheckoutBloc>().add(
-  //             WalletPaymentEvent(
-  //               addressId: _selectedAddressId!,
-  //               items: cartState.items,
-  //               totalAmount: finalAmount,
-  //             ),
-  //           );
-  //     } else if (_selectedPaymentMethod == 'cod') {
-  //       context.read<CheckoutBloc>().add(
-  //             InitiateCheckoutEvent(
-  //               addressId: _selectedAddressId!,
-  //               items: cartState.items,
-  //               totalAmount: finalAmount,
-  //               paymentMethod: 'cod',
-  //             ),
-  //           );
-  //     } else if (_selectedPaymentMethod == 'stripe') {
-  //       context.read<CheckoutBloc>().add(
-  //             InitiateCheckoutEvent(
-  //               addressId: _selectedAddressId!,
-  //               paymentMethod: 'stripe',
-  //               items: cartState.items,
-  //               totalAmount: finalAmount,
-  //             ),
-  //           );
-
-  //       await StripeService.instance
-  //           .makePayment(amount: finalAmount, context: context);
-  //     }
-  //   }
-  // }
-
   void _handlePlaceOrder() async {
     if (_isPlacingOrder) return;
 
@@ -399,10 +330,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final cartState = context.read<CartBloc>().state;
     final couponState = context.read<CouponBloc>().state;
-
-    // Add detailed coupon state debugging
-    print('Current Coupon State: ${couponState.runtimeType}');
-    print('Coupon State Properties: $couponState');
 
     if (cartState is! CartLoadedState) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -419,44 +346,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
-      // Calculate subtotal from cart items
-      double subtotal =
-          cartState.items.fold(0.0, (sum, item) => sum + item.totalPrice);
+      // Calculate base subtotal
+      double subtotal = cartState.items.fold(
+        0.0,
+        (sum, item) => sum + (item.price * item.quantity),
+      );
 
-      // Calculate coupon discount with additional debugging
+      // Calculate item-level discounts
+      double itemDiscounts = cartState.items.fold(0.0, (sum, item) {
+        final basePrice = item.price * item.quantity;
+        final maxDiscount = [
+          item.percentDiscount,
+          item.categoryOffer,
+          item.product?.offer ?? 0.0
+        ].reduce((a, b) => a > b ? a : b);
+        return sum + (basePrice * maxDiscount / 100);
+      });
+
+      // Get coupon discount
       double couponDiscount = 0.0;
-      print('Before coupon check - Discount: $couponDiscount');
-
       if (couponState is CouponApplied) {
-        print('Entering coupon applied block');
-        print('Coupon State Details:');
-        print('  - Type: ${couponState.runtimeType}');
-        print('  - Discount Amount: ${couponState.discountAmount}');
         couponDiscount = couponState.discountAmount;
-      } else {
-        print('Coupon not applied. Current state: ${couponState.runtimeType}');
+        print('Applied coupon discount: $couponDiscount'); // Debug log
       }
 
-      print('After coupon check - Final Discount: $couponDiscount');
+      // Calculate final amount INCLUDING coupon discount
+      final finalAmount =
+          subtotal - itemDiscounts - couponDiscount + _shippingCharge;
+      print('Order calculation:'); // Debug logs
+      print('Subtotal: $subtotal');
+      print('Item discounts: $itemDiscounts');
+      print('Coupon discount: $couponDiscount');
+      print('Shipping: $_shippingCharge');
+      print('Final amount: $finalAmount');
 
-      // Calculate final amount with coupon discount
-      final finalAmount = subtotal - couponDiscount + _shippingCharge;
+      setState(() => _isPlacingOrder = true);
 
-      // Debug prints
-      print('Order Summary:');
-      print('  - Subtotal: $subtotal');
-      print('  - Coupon Discount: $couponDiscount');
-      print('  - Shipping: $_shippingCharge');
-      print('  - Final Amount: $finalAmount');
+      // Handle different payment methods
       if (_selectedPaymentMethod == 'wallet') {
         if (_walletBalance < finalAmount) {
+          setState(() => _isPlacingOrder = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Insufficient wallet balance')),
           );
           return;
         }
 
-        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               WalletPaymentEvent(
                 addressId: _selectedAddressId!,
@@ -465,7 +400,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'cod') {
-        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               InitiateCheckoutEvent(
                 addressId: _selectedAddressId!,
@@ -475,7 +409,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             );
       } else if (_selectedPaymentMethod == 'stripe') {
-        setState(() => _isPlacingOrder = true);
         context.read<CheckoutBloc>().add(
               InitiateCheckoutEvent(
                 addressId: _selectedAddressId!,

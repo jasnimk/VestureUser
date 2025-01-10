@@ -27,6 +27,7 @@ class CartLoadedState extends CartState {
   final String? error;
   final String? errorItemId;
   final String? loadingItemId;
+  final bool isUpdating;
 
   const CartLoadedState({
     required this.items,
@@ -34,6 +35,7 @@ class CartLoadedState extends CartState {
     this.error,
     this.errorItemId,
     this.loadingItemId,
+    this.isUpdating = false,
   });
 
   @override

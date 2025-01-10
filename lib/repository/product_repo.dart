@@ -6,33 +6,213 @@ import 'package:flutter/material.dart';
 import 'package:vesture_firebase_user/models/offer_model.dart';
 import 'package:vesture_firebase_user/models/product_filter.dart';
 import 'package:vesture_firebase_user/models/product_model.dart';
-import 'package:vesture_firebase_user/repository/product_repo.dart';
-import 'package:vesture_firebase_user/utilities/color_service.dart';
-import 'package:vesture_firebase_user/utilities/google_services.dart';
+import 'package:vesture_firebase_user/utilities&Services/google_services.dart';
 
 class ProductRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Map<String, String> _brandNameCache = {};
+  final Map<String, double> _categoryOfferCache = {};
+
+  // Add cache duration constants
+  static const Duration brandCacheDuration = Duration(hours: 1);
+  static const Duration offerCacheDuration = Duration(minutes: 15);
+
+  // Add cache timestamp tracking
+  final Map<String, DateTime> _brandCacheTimestamps = {};
+  final Map<String, DateTime> _offerCacheTimestamps = {};
 
   Future<List<ProductModel>> fetchProducts() async {
     try {
-      final categoriesSnapshot = await _firestore
-          .collection('categories')
-          .where('isActive', isEqualTo: true)
-          .get();
+      // Create both queries
+      final Future<QuerySnapshot<Map<String, dynamic>>> productsSnapshot =
+          _firestore
+              .collection('products')
+              .where('isActive', isEqualTo: true)
+              .get();
 
+      final Future<QuerySnapshot<Map<String, dynamic>>> categoriesSnapshot =
+          _firestore
+              .collection('categories')
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      // Wait for both queries with explicit typing
+      final List<QuerySnapshot<Map<String, dynamic>>> results =
+          await Future.wait<QuerySnapshot<Map<String, dynamic>>>([
+        productsSnapshot,
+        categoriesSnapshot,
+      ]);
+
+      // Extract results
+      final QuerySnapshot<Map<String, dynamic>> productsResult = results[0];
+      final QuerySnapshot<Map<String, dynamic>> categoriesResult = results[1];
+
+      // Process results
       final activeCategoryIds =
-          categoriesSnapshot.docs.map((doc) => doc.id).toList();
+          categoriesResult.docs.map((doc) => doc.id).toSet();
 
-      final productsSnapshot = await _firestore
-          .collection('products')
-          .where('isActive', isEqualTo: true)
-          .where('parentCategoryId', whereIn: activeCategoryIds)
-          .get();
+      final activeProducts = productsResult.docs.where((doc) {
+        final data = doc.data();
+        return activeCategoryIds.contains(data['parentCategoryId']);
+      }).toList();
 
-      return _mapProducts(productsSnapshot.docs);
+      return _mapProducts(activeProducts);
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<List<ProductModel>> _mapProducts(
+      List<QueryDocumentSnapshot> docs) async {
+    if (docs.isEmpty) return [];
+
+    try {
+      // 1. Create batch queries for variants and size stocks
+      final productIds = docs.map((doc) => doc.id).toList();
+
+      // Split into chunks of 10 for Firestore limits
+      final chunks = _chunkList(productIds, 10);
+
+      // 2. Fetch variants and size stocks in parallel for each chunk
+      final allVariants = <QueryDocumentSnapshot>[];
+      final allSizeStocks = <QueryDocumentSnapshot>[];
+
+      for (var chunk in chunks) {
+        final variantsQuery = _firestore
+            .collection('variants')
+            .where('productId', whereIn: chunk)
+            .get();
+
+        final results = await variantsQuery;
+        allVariants.addAll(results.docs);
+
+        if (results.docs.isNotEmpty) {
+          final variantIds = results.docs.map((doc) => doc.id).toList();
+          final variantChunks = _chunkList(variantIds, 10);
+
+          for (var variantChunk in variantChunks) {
+            final stocksQuery = _firestore
+                .collection('sizes_and_stocks')
+                .where('variantId', whereIn: variantChunk)
+                .get();
+
+            final stockResults = await stocksQuery;
+            allSizeStocks.addAll(stockResults.docs);
+          }
+        }
+      }
+
+      // 3. Create efficient lookup maps
+      final variantsByProduct = _groupVariantsByProduct(allVariants);
+      final sizeStocksByVariant = _groupSizeStocksByVariant(allSizeStocks);
+
+      // 4. Process products in parallel
+      final productFutures = docs.map((doc) async {
+        final productId = doc.id;
+        final productVariants = variantsByProduct[productId] ?? [];
+
+        final variants = productVariants.map((variantDoc) {
+          final variantId = variantDoc.id;
+          final sizeStocks = sizeStocksByVariant[variantId] ?? [];
+          return Variant.fromMap(
+              variantDoc.data() as Map<String, dynamic>, variantId, sizeStocks);
+        }).toList();
+
+        final brandName = await _fetchBrandNameWithCache(doc);
+        final data = doc.data() as Map<String, dynamic>;
+        final offer = await _fetchCategoryOfferWithCache(
+            data['parentCategoryId'], data['subCategoryId']);
+
+        return ProductModel.fromFirestore(doc, variants, brandName, offer);
+      });
+
+      return await Future.wait(productFutures);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Helper method to chunk lists
+  List<List<T>> _chunkList<T>(List<T> list, int chunkSize) {
+    final chunks = <List<T>>[];
+    for (var i = 0; i < list.length; i += chunkSize) {
+      chunks.add(list.sublist(
+          i, i + chunkSize > list.length ? list.length : i + chunkSize));
+    }
+    return chunks;
+  }
+
+  // Helper method to group variants by product
+  Map<String, List<QueryDocumentSnapshot>> _groupVariantsByProduct(
+      List<QueryDocumentSnapshot> variants) {
+    final map = <String, List<QueryDocumentSnapshot>>{};
+    for (var variant in variants) {
+      final data = variant.data() as Map<String, dynamic>;
+      final productId = data['productId'] as String;
+      map[productId] ??= [];
+      map[productId]!.add(variant);
+    }
+    return map;
+  }
+
+  // Helper method to group size stocks by variant
+  Map<String, List<SizeStockModel>> _groupSizeStocksByVariant(
+      List<QueryDocumentSnapshot> sizeStocks) {
+    final map = <String, List<SizeStockModel>>{};
+    for (var stock in sizeStocks) {
+      final data = stock.data() as Map<String, dynamic>;
+      final variantId = data['variantId'] as String;
+      map[variantId] ??= [];
+      map[variantId]!.add(SizeStockModel.fromMap(data, stock.id));
+    }
+    return map;
+  }
+
+  // Improved brand name caching with expiration
+  Future<String?> _fetchBrandNameWithCache(DocumentSnapshot doc) async {
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data?['brandId'] == null) return null;
+
+    final brandId = data!['brandId'];
+    final now = DateTime.now();
+
+    // Check if cache is valid
+    if (_brandNameCache.containsKey(brandId) &&
+        _brandCacheTimestamps.containsKey(brandId) &&
+        now.difference(_brandCacheTimestamps[brandId]!) < brandCacheDuration) {
+      return _brandNameCache[brandId];
+    }
+
+    // Fetch and update cache
+    final brandDoc = await _firestore.collection('brands').doc(brandId).get();
+    final brandName = brandDoc.data()?['brandName'] ?? 'Unknown Brand';
+    _brandNameCache[brandId] = brandName;
+    _brandCacheTimestamps[brandId] = now;
+
+    return brandName;
+  }
+
+  // Improved category offer caching with expiration
+  Future<double> _fetchCategoryOfferWithCache(
+      String? parentCategoryId, String? subCategoryId) async {
+    if (parentCategoryId == null && subCategoryId == null) return 0.0;
+
+    final cacheKey = '${parentCategoryId}_${subCategoryId}';
+    final now = DateTime.now();
+
+    // Check if cache is valid
+    if (_categoryOfferCache.containsKey(cacheKey) &&
+        _offerCacheTimestamps.containsKey(cacheKey) &&
+        now.difference(_offerCacheTimestamps[cacheKey]!) < offerCacheDuration) {
+      return _categoryOfferCache[cacheKey]!;
+    }
+
+    // Fetch and update cache
+    final offer = await fetchCategoryOffer(parentCategoryId, subCategoryId);
+    _categoryOfferCache[cacheKey] = offer;
+    _offerCacheTimestamps[cacheKey] = now;
+
+    return offer;
   }
 
   Future<List<ProductModel>> fetchProductsByCategory(String categoryId) async {
@@ -61,201 +241,63 @@ class ProductRepository {
     }
   }
 
-  // Future<List<ProductModel>> searchProducts(String query) async {
-  //   try {
-  //     final lowerCaseQuery = query.toLowerCase().trim();
-
-  //     var querySnapshot = await _firestore
-  //         .collection('products')
-  //         .where('searchKeywords', arrayContains: lowerCaseQuery)
-  //         .where('isActive', isEqualTo: true)
-  //         .get();
-
-  //     if (querySnapshot.docs.isEmpty) {
-  //       querySnapshot = await _firestore
-  //           .collection('products')
-  //           .where('isActive', isEqualTo: true)
-  //           .get();
-  //     }
-
-  //     final filteredDocs = querySnapshot.docs.where((doc) {
-  //       final data = doc.data();
-  //       final searchKeywords = (data['searchKeywords'] as List? ?? [])
-  //           .map((k) => k.toString().toLowerCase())
-  //           .toList();
-
-  //       return searchKeywords
-  //               .any((keyword) => keyword.contains(lowerCaseQuery)) ||
-  //           (data['productName'] as String?)
-  //                   ?.toLowerCase()
-  //                   .contains(lowerCaseQuery) ==
-  //               true ||
-  //           (data['description'] as String?)
-  //                   ?.toLowerCase()
-  //                   .contains(lowerCaseQuery) ==
-  //               true;
-  //     }).toList();
-
-  //     return _mapProducts(filteredDocs);
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
   Future<List<ProductModel>> searchProducts(String query,
       {String? categoryId}) async {
     try {
       final lowerCaseQuery = query.toLowerCase().trim();
 
-      // Base query that checks both parentCategoryId and subCategoryId
+      // Base query
       Query productsQuery =
           _firestore.collection('products').where('isActive', isEqualTo: true);
 
       if (categoryId != null) {
-        // Get products that match either parentCategoryId or subCategoryId
-        final parentCategoryQuery =
+        productsQuery =
             productsQuery.where('parentCategoryId', isEqualTo: categoryId);
-
-        final subCategoryQuery =
-            productsQuery.where('subCategoryId', isEqualTo: categoryId);
-
-        // Execute both queries
-        final parentResults = await parentCategoryQuery.get();
-        final subResults = await subCategoryQuery.get();
-
-        // Combine and deduplicate results
-        final allDocs = {...parentResults.docs, ...subResults.docs};
-
-        // Filter combined results by search query
-        final filteredDocs = allDocs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>?;
-          if (data == null) return false;
-
-          // Safely access and convert searchKeywords
-          final searchKeywords = (data['searchKeywords'] as List?)
-                  ?.map((k) => k.toString().toLowerCase())
-                  .toList() ??
-              [];
-
-          final productName = (data['productName'] as String?)?.toLowerCase();
-          final description = (data['description'] as String?)?.toLowerCase();
-
-          return searchKeywords
-                  .any((keyword) => keyword.contains(lowerCaseQuery)) ||
-              productName?.contains(lowerCaseQuery) == true ||
-              description?.contains(lowerCaseQuery) == true;
-        }).toList();
-
-        return _mapProducts(filteredDocs.toList());
-      } else {
-        // If no category filter, perform regular search
-        var querySnapshot = await productsQuery
-            .where('searchKeywords', arrayContains: lowerCaseQuery)
-            .get();
-
-        if (querySnapshot.docs.isEmpty) {
-          // If no exact matches, try broader search
-          querySnapshot = await productsQuery.get();
-
-          final filteredDocs = querySnapshot.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>?;
-            if (data == null) return false;
-
-            final searchKeywords = (data['searchKeywords'] as List?)
-                    ?.map((k) => k.toString().toLowerCase())
-                    .toList() ??
-                [];
-
-            final productName = (data['productName'] as String?)?.toLowerCase();
-            final description = (data['description'] as String?)?.toLowerCase();
-
-            return searchKeywords
-                    .any((keyword) => keyword.contains(lowerCaseQuery)) ||
-                productName?.contains(lowerCaseQuery) == true ||
-                description?.contains(lowerCaseQuery) == true;
-          }).toList();
-
-          return _mapProducts(filteredDocs);
-        }
-
-        return _mapProducts(querySnapshot.docs);
       }
+
+      final querySnapshot = await productsQuery.get();
+
+      // Filter in memory for better search
+      final filteredDocs = querySnapshot.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>?;
+        if (data == null) return false;
+
+        final searchTerms = [
+          data['productName']?.toString().toLowerCase() ?? '',
+          data['description']?.toString().toLowerCase() ?? '',
+          ...(data['searchKeywords'] as List? ?? [])
+              .map((k) => k.toString().toLowerCase())
+        ];
+
+        return searchTerms.any((term) => term.contains(lowerCaseQuery));
+      }).toList();
+
+      return _mapProducts(filteredDocs);
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<List<Variant>> _fetchVariantsWithSizeStocks(String productId) async {
-    try {
-      final variantsSnapshot = await _firestore
-          .collection('variants')
-          .where('productId', isEqualTo: productId)
-          .get();
+  Future<List<ProductModel>> sortProducts({
+    required List<ProductModel> products,
+    required String sortOption,
+  }) async {
+    // Create a copy to avoid modifying the original list
+    final sortedProducts = List<ProductModel>.from(products);
 
-      List<Variant> variants = [];
-      for (var variantDoc in variantsSnapshot.docs) {
-        final sizeStocksSnapshot = await _firestore
-            .collection('sizes_and_stocks')
-            .where('variantId', isEqualTo: variantDoc.id)
-            .get();
-
-        List<SizeStockModel> sizeStocks = sizeStocksSnapshot.docs
-            .map((doc) => SizeStockModel.fromMap(doc.data(), doc.id))
-            .toList();
-
-        variants
-            .add(Variant.fromMap(variantDoc.data(), variantDoc.id, sizeStocks));
-      }
-      return variants;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<String?> _fetchBrandName(DocumentSnapshot doc) async {
-    try {
-      final docData = doc.data() as Map<String, dynamic>?;
-      if (docData?['brandId'] == null) return null;
-
-      final brandDoc =
-          await _firestore.collection('brands').doc(docData!['brandId']).get();
-
-      return brandDoc.data()?['brandName'] ?? 'Unknown Brand';
-    } catch (e) {
-      return 'Unknown Brand';
-    }
-  }
-
-  Future<List<ProductModel>> sortProducts(
-      {required List<ProductModel> products,
-      required String sortOption}) async {
     switch (sortOption) {
       case 'Price: lowest to high':
-        return _sortByPriceLowestToHighest(products);
+        sortedProducts
+            .sort((a, b) => a.getDefaultPrice().compareTo(b.getDefaultPrice()));
       case 'Price: highest to low':
-        return _sortByPriceHighestToLowest(products);
+        sortedProducts
+            .sort((a, b) => b.getDefaultPrice().compareTo(a.getDefaultPrice()));
       case 'Rating: highest first':
       default:
-        return products;
+        // Keep original order or implement rating sort if needed
+        break;
     }
-  }
 
-  List<ProductModel> _sortByPriceLowestToHighest(List<ProductModel> products) {
-    List<ProductModel> sortedProducts = List.from(products);
-    sortedProducts.sort((a, b) {
-      double priceA = a.getDefaultPrice();
-      double priceB = b.getDefaultPrice();
-      return priceA.compareTo(priceB);
-    });
-    return sortedProducts;
-  }
-
-  List<ProductModel> _sortByPriceHighestToLowest(List<ProductModel> products) {
-    List<ProductModel> sortedProducts = List.from(products);
-    sortedProducts.sort((a, b) {
-      double priceA = a.getDefaultPrice();
-      double priceB = b.getDefaultPrice();
-      return priceB.compareTo(priceA);
-    });
     return sortedProducts;
   }
 
@@ -430,24 +472,18 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductModel>> _mapProducts(
-      List<QueryDocumentSnapshot> docs) async {
-    List<ProductModel> products = [];
+  Future<List<ProductModel>> fetchProductsByBrand(String brandId) async {
+    try {
+      final productsSnapshot = await _firestore
+          .collection('products')
+          .where('isActive', isEqualTo: true)
+          .where('brandId', isEqualTo: brandId)
+          .get();
 
-    for (var doc in docs) {
-      final data = doc.data() as Map<String, dynamic>;
-
-      final variants = await _fetchVariantsWithSizeStocks(doc.id);
-      final brandName = await _fetchBrandName(doc);
-
-      double finalOffer = await fetchCategoryOffer(
-          data['parentCategoryId'], data['subCategoryId']);
-
-      products.add(
-          ProductModel.fromFirestore(doc, variants, brandName, finalOffer));
+      return _mapProducts(productsSnapshot.docs);
+    } catch (e) {
+      rethrow;
     }
-
-    return products;
   }
 }
 
@@ -456,87 +492,54 @@ extension VisualSearchRepository on ProductRepository {
     try {
       final visionService = GoogleVisionService();
       final labels = await visionService.detectLabels(image);
-      print('Labels received from Vision API: $labels');
 
-      final labelWords = _processLabels(labels);
-      print('Processed label words: $labelWords');
+      // Fetch all products first
+      final allProducts = await fetchProducts();
+      if (allProducts.isEmpty) {
+        return [];
+      }
 
-      final querySnapshot = await _firestore
-          .collection('products')
-          .where('isActive', isEqualTo: true)
-          .get();
-      print('Total products fetched: ${querySnapshot.docs.length}');
+      // Create a scoring system for products
+      final scoredProducts = allProducts.map((product) {
+        double score = 0.0;
+        final searchKeywords = [
+          ...(product.toMap()['searchKeywords'] as List? ?? []),
+          product.productName ?? '',
+          product.description ?? '',
+          ...?product.variants?.map((v) => v.color),
+          product.brandName ?? '',
+        ].map((s) => s.toString().toLowerCase()).toList();
 
-      final scoredProducts = querySnapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            final searchKeywords =
-                _processKeywords(data['searchKeywords'] as List? ?? []);
-            final score = _calculateMatchScore(labelWords, searchKeywords);
-            return ScoredProduct(doc, score);
-          })
-          .where((product) => product.score > 0)
+        // Calculate score based on matching labels
+        for (final label in labels) {
+          final labelText = label.toLowerCase();
+          for (final keyword in searchKeywords) {
+            // Exact match gets higher score
+            if (keyword == labelText) {
+              score += 1.0;
+            }
+            // Partial match gets lower score
+            else if (keyword.contains(labelText) ||
+                labelText.contains(keyword)) {
+              score += 0.5;
+            }
+          }
+        }
+
+        return MapEntry(product, score);
+      }).toList();
+
+      // Sort by score and filter out zero scores
+      scoredProducts.sort((a, b) => b.value.compareTo(a.value));
+      final results = scoredProducts
+          .where((entry) => entry.value > 0)
+          .map((entry) => entry.key)
           .toList();
 
-      scoredProducts.sort((a, b) => b.score.compareTo(a.score));
-      print('Matched products count: ${scoredProducts.length}');
-
-      return _mapProducts(scoredProducts.map((sp) => sp.doc).toList());
+      // Return top matches or empty list if no matches
+      return results.take(20).toList();
     } catch (e) {
-      print('Error in searchByImage: $e');
       rethrow;
     }
   }
-
-  List<String> _processLabels(List<String> labels) {
-    return labels
-        .expand((label) => label.toLowerCase().split(' '))
-        .map((word) => word.replaceAll(RegExp(r'[^\w\s]+'), ''))
-        .where((word) => word.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  List<String> _processKeywords(List<dynamic> keywords) {
-    return keywords
-        .map((k) =>
-            k.toString().toLowerCase().replaceAll(RegExp(r'[^\w\s]+'), ''))
-        .toList();
-  }
-
-  double _calculateMatchScore(
-      List<String> labelWords, List<String> searchKeywords) {
-    double score = 0.0;
-    int commonWords = 0;
-
-    for (var labelWord in labelWords) {
-      if (searchKeywords.contains(labelWord)) {
-        score += 1.0;
-        commonWords++;
-        continue;
-      }
-
-      for (var keyword in searchKeywords) {
-        if (keyword.contains(labelWord) || labelWord.contains(keyword)) {
-          double lengthScore = 1 -
-              (labelWord.length - keyword.length).abs() /
-                  max(labelWord.length, keyword.length);
-          score += 0.5 * lengthScore;
-          commonWords++;
-          break;
-        }
-      }
-    }
-
-    double commonWordRatio =
-        commonWords / max(labelWords.length, searchKeywords.length);
-    return score * (1 + commonWordRatio);
-  }
-}
-
-class ScoredProduct {
-  final QueryDocumentSnapshot doc;
-  final double score;
-
-  ScoredProduct(this.doc, this.score);
 }

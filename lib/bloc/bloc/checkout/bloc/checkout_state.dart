@@ -55,7 +55,8 @@ class StripePaymentInitiated extends CheckoutState {
   final List<CartItem> items;
   final double totalAmount;
   final CouponModel? appliedCoupon; // Add this
-  final double? couponDiscount; // Add this
+  final double? couponDiscount;
+  // Add this
 
   StripePaymentInitiated({
     required this.addressId,

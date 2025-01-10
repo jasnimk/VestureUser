@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:shimmer/main.dart';
 import 'package:vesture_firebase_user/bloc/Product/product_bloc.dart';
 import 'package:vesture_firebase_user/bloc/address/bloc/adress_bloc.dart';
 import 'package:vesture_firebase_user/bloc/authentication/authentication_bloc.dart';
@@ -36,105 +35,8 @@ import 'package:vesture_firebase_user/repository/review_repo.dart';
 import 'package:vesture_firebase_user/repository/wallet_repo.dart';
 import 'package:vesture_firebase_user/screens/splash_screen.dart';
 import 'package:vesture_firebase_user/themes/theme.dart';
-import 'package:vesture_firebase_user/utilities/keysApi.dart';
-import 'package:vesture_firebase_user/utilities/nav_service.dart';
-
-// void main() async {
-//   // await _setup();
-//   WidgetsFlutterBinding.ensureInitialized();
-//   Stripe.publishableKey = stripePublishableKey;
-//   await Firebase.initializeApp(
-//     options: DefaultFirebaseOptions.currentPlatform,
-//   );
-//   final User? currentUser = FirebaseAuth.instance.currentUser;
-//   final String? userId = currentUser?.uid;
-
-//   runApp(
-//     MultiBlocProvider(
-//       providers: [
-//         BlocProvider(
-//           create: (context) => AuthBloc(
-//             firebaseAuth: FirebaseAuth.instance,
-//             firestore: FirebaseFirestore.instance,
-//           ),
-//         ),
-//         BlocProvider(
-//           create: (context) => ProfileBloc(
-//             firestore: FirebaseFirestore.instance,
-//             firebaseAuth: FirebaseAuth.instance,
-//           ),
-//         ),
-//         BlocProvider(
-//           create: (_) => ThemeCubit(),
-//         ),
-//         BlocProvider(
-//           create: (_) => ProductDetailsBloc(cartRepository: CartRepository()),
-//         ),
-//         BlocProvider(
-//           create: (_) => FavoriteBloc(favoriteRepository: FavoriteRepository()),
-//         ),
-//         BlocProvider(
-//           create: (_) => ProductBloc(productRepository: ProductRepository()),
-//         ),
-//         BlocProvider(
-//           create: (_) => CategoryBloc(categoryRepository: CategoryRepository()),
-//         ),
-//         BlocProvider(
-//           create: (_) => CartBloc(cartRepository: CartRepository()),
-//         ),
-//         BlocProvider(create: (_) => AddressBloc(userId!, AddressRepository())),
-//         // First create WalletBloc
-//         BlocProvider<WalletBloc>(
-//           create: (_) => WalletBloc(walletRepository: WalletRepository()),
-//         ),
-//         // Then create OrdersBloc with WalletBloc dependency
-//         BlocProvider<OrdersBloc>(
-//           create: (context) => OrdersBloc(
-//             OrdersRepository(),
-//             context.read<WalletBloc>(),
-//           ),
-//         ),
-//         BlocProvider<ReviewBloc>(
-//           create: (context) => ReviewBloc(
-//             reviewRepository: ReviewRepository(),
-//           ),
-//         ),
-//         BlocProvider(
-//           create: (context) => CouponBloc(
-//             couponRepository: CouponRepository(),
-//           ),
-//         ),
-//         BlocProvider<HomeBloc>(
-//           create: (context) => HomeBloc(
-//             repository: context.read<HomeRepository>(),
-//           )..add(LoadHomeData()),
-//         ),
-//         // BlocProvider<CheckoutBloc>(
-//         //   create: (context) => CheckoutBloc(
-//         //     checkoutRepository: CheckoutRepository(),
-//         //     cartBloc: context.read<CartBloc>(),
-//         //     couponBloc: context.read<CouponBloc>(),
-//         //   ),
-//         // ),
-//         // In main.dart
-//         //   BlocProvider(
-//         //     create: (context) => OrdersBloc(
-//         //       OrdersRepository(),
-//         //       context.read<WalletBloc>(), // Get WalletBloc from context
-//         //     ),
-//         //   ),
-//         //   //  BlocProvider(create: (_) => OrdersBloc(OrdersRepository(),)),
-//         //   BlocProvider(
-//         //       create: (_) => WalletBloc(walletRepository: WalletRepository())),
-//       ],
-//       child: MyApp(),
-//     ),
-//   );
-// }
-
-// // Future<void> _setup() async {
-
-// // }
+import 'package:vesture_firebase_user/utilities&Services/keysApi.dart';
+import 'package:vesture_firebase_user/utilities&Services/nav_service.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -172,12 +74,18 @@ void main() async {
   final User? currentUser = FirebaseAuth.instance.currentUser;
   final String? userId = currentUser?.uid;
 
-  // Create HomeRepository instance
   final homeRepository = HomeRepository();
 
   runApp(
     MultiBlocProvider(
       providers: [
+        BlocProvider<CheckoutBloc>(
+          create: (context) => CheckoutBloc(
+            cartBloc: context.read<CartBloc>(),
+            couponBloc: context.read<CouponBloc>(),
+            checkoutRepository: CheckoutRepository(),
+          ),
+        ),
         BlocProvider(
           create: (context) => AuthBloc(
             firebaseAuth: FirebaseAuth.instance,
@@ -200,9 +108,6 @@ void main() async {
           create: (_) => FavoriteBloc(favoriteRepository: FavoriteRepository()),
         ),
         BlocProvider(
-          create: (_) => ProductBloc(productRepository: ProductRepository()),
-        ),
-        BlocProvider(
           create: (_) => CategoryBloc(categoryRepository: CategoryRepository()),
         ),
         BlocProvider(
@@ -223,7 +128,7 @@ void main() async {
             reviewRepository: ReviewRepository(),
           ),
         ),
-        BlocProvider(
+        BlocProvider<CouponBloc>(
           create: (context) => CouponBloc(
             couponRepository: CouponRepository(),
           ),
@@ -231,6 +136,11 @@ void main() async {
         BlocProvider<HomeBloc>(
           create: (_) =>
               HomeBloc(repository: homeRepository)..add(LoadHomeData()),
+        ),
+        BlocProvider<ProductBloc>(
+          create: (context) => ProductBloc(
+            productRepository: ProductRepository(),
+          ),
         ),
       ],
       child: MyApp(),

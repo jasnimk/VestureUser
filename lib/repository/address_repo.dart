@@ -5,10 +5,16 @@ class AddressRepository {
 
   Future<void> addAddress(
       String userId, Map<String, dynamic> addressData) async {
+    if (userId.isEmpty) {
+      throw Exception('Invalid user ID');
+    }
+
     final data = {
       ...addressData,
+      'userId': userId,
       'createdAt': FieldValue.serverTimestamp(),
     };
+
     await _firestore
         .collection('users')
         .doc(userId)
@@ -17,10 +23,15 @@ class AddressRepository {
   }
 
   Future<List<Map<String, dynamic>>> loadAddresses(String userId) async {
+    if (userId.isEmpty) {
+      throw Exception('Invalid user ID');
+    }
+
     final snapshot = await _firestore
         .collection('users')
         .doc(userId)
         .collection('addresses')
+        .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .get();
 
@@ -35,24 +46,46 @@ class AddressRepository {
 
   Future<void> updateAddress(
       String userId, String addressId, Map<String, dynamic> addressData) async {
+    if (userId.isEmpty || addressId.isEmpty) {
+      throw Exception('Invalid user ID or address ID');
+    }
+
     final data = {
       ...addressData,
+      'userId': userId,
       'updatedAt': FieldValue.serverTimestamp(),
     };
-    await _firestore
+
+    final docRef = _firestore
         .collection('users')
         .doc(userId)
         .collection('addresses')
-        .doc(addressId)
-        .update(data);
+        .doc(addressId);
+
+    final doc = await docRef.get();
+    if (!doc.exists || doc.data()?['userId'] != userId) {
+      throw Exception('Address not found or unauthorized');
+    }
+
+    await docRef.update(data);
   }
 
   Future<void> deleteAddress(String userId, String addressId) async {
-    await _firestore
+    if (userId.isEmpty || addressId.isEmpty) {
+      throw Exception('Invalid user ID or address ID');
+    }
+
+    final docRef = _firestore
         .collection('users')
         .doc(userId)
         .collection('addresses')
-        .doc(addressId)
-        .delete();
+        .doc(addressId);
+
+    final doc = await docRef.get();
+    if (!doc.exists || doc.data()?['userId'] != userId) {
+      throw Exception('Address not found or unauthorized');
+    }
+
+    await docRef.delete();
   }
 }

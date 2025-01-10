@@ -21,18 +21,19 @@ class EnhancedOrderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<CartBloc>(
-          create: (context) =>
-              CartBloc(cartRepository: CartRepository())..add(LoadCartEvent()),
-        ),
-        BlocProvider<CouponBloc>(
-          create: (context) => CouponBloc(couponRepository: CouponRepository()),
-        ),
-      ],
-      child: _buildContent(),
-    );
+    // return MultiBlocProvider(
+    //   providers: [
+    //     BlocProvider<CartBloc>(
+    //       create: (context) =>
+    //           CartBloc(cartRepository: CartRepository())..add(LoadCartEvent()),
+    //     ),
+    //     BlocProvider<CouponBloc>(
+    //       create: (context) => CouponBloc(couponRepository: CouponRepository()),
+    //     ),
+    //   ],
+    //   child: _buildContent(),
+    // );
+    return _buildContent();
   }
 
   Widget _buildContent() {
@@ -186,6 +187,15 @@ class EnhancedOrderSummary extends StatelessWidget {
     double subtotal,
     CouponState couponState,
   ) {
+    print('🏷️ Building coupon section');
+    print('Current coupon state: ${couponState.runtimeType}');
+
+    if (couponState is CouponApplied) {
+      print('✅ Coupon applied:');
+      print('   - Code: ${couponState.coupon.couponCode}');
+      print('   - Discount: ${couponState.coupon.discount}%');
+      print('   - Amount: ${couponState.discountAmount}');
+    }
     final TextEditingController couponController = TextEditingController();
 
     final cartState = context.watch<CartBloc>().state;

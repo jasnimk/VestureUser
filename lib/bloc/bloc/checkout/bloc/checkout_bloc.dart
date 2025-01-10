@@ -25,6 +25,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     on<StripePaymentSuccessEvent>(_onStripePaymentSuccess);
     on<WalletPaymentEvent>(_onWalletPayment);
   }
+
   Future _onWalletPayment(
     WalletPaymentEvent event,
     Emitter emit,
@@ -32,12 +33,24 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     try {
       emit(CheckoutLoading());
 
+      // Get current coupon state
+      final couponState = _couponBloc.state;
+      CouponModel? appliedCoupon;
+      double? couponDiscount;
+
+      if (couponState is CouponApplied) {
+        appliedCoupon = couponState.coupon;
+        couponDiscount = couponState.discountAmount;
+      }
+
       final orderId = await _checkoutRepository.createOrder(
-        addressId: event.addressId,
-        items: event.items,
-        paymentMethod: 'wallet',
-        paymentId: null,
-      );
+          addressId: event.addressId,
+          items: event.items,
+          paymentMethod: 'wallet',
+          paymentId: null,
+          appliedCoupon: appliedCoupon,
+          couponDiscount: couponDiscount,
+          finalAmount: event.totalAmount);
 
       try {
         await _walletRepository.deductFromWallet(
@@ -59,35 +72,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     }
   }
 
-//   Future<void> _onInitiateCheckout(
-//     InitiateCheckoutEvent event,
-//     Emitter<CheckoutState> emit,
-//   ) async {
-//     try {
-//       emit(CheckoutLoading());
-
-//       if (event.paymentMethod == 'cod') {
-//         final orderId = await _checkoutRepository.createOrder(
-//           addressId: event.addressId,
-//           items: event.items,
-//           paymentMethod: 'cod',
-//           paymentId: null,
-//         );
-//         emit(CheckoutSuccess(orderId));
-//       } else if (event.paymentMethod == 'stripe') {
-//         // Emit PaymentProcessing state
-//         emit(PaymentProcessing());
-//         // Store order details temporarily
-//         emit(StripePaymentInitiated(
-//           addressId: event.addressId,
-//           items: event.items,
-//           totalAmount: event.totalAmount,
-//         ));
-//       }
-//     } catch (e) {
-//       emit(CheckoutError(e.toString()));
-//     }
-//   }
   Future<void> _onStripePaymentSuccess(
     StripePaymentSuccessEvent event,
     Emitter<CheckoutState> emit,
@@ -99,13 +83,13 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
 
       if (currentState is StripePaymentInitiated) {
         final orderId = await _checkoutRepository.createOrder(
-          addressId: currentState.addressId,
-          items: currentState.items,
-          paymentMethod: 'stripe',
-          paymentId: event.paymentIntentId,
-          appliedCoupon: currentState.appliedCoupon,
-          couponDiscount: currentState.couponDiscount,
-        );
+            addressId: currentState.addressId,
+            items: currentState.items,
+            paymentMethod: 'stripe',
+            paymentId: event.paymentIntentId,
+            appliedCoupon: currentState.appliedCoupon,
+            couponDiscount: currentState.couponDiscount,
+            finalAmount: event.totalAmount);
 
         emit(CheckoutSuccess(orderId));
       } else {
@@ -116,33 +100,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       emit(CheckoutError(e.toString()));
     }
   }
-  // Future<void> _onStripePaymentSuccess(
-  //   StripePaymentSuccessEvent event,
-  //   Emitter<CheckoutState> emit,
-  // ) async {
-  //   try {
-  //     final currentState = state;
-
-  //     emit(CheckoutLoading());
-
-  //     if (currentState is StripePaymentInitiated) {
-  //       final orderId = await _checkoutRepository.createOrder(
-  //         addressId: currentState.addressId,
-  //         items: currentState.items,
-  //         paymentMethod: 'stripe',
-  //         paymentId: event.paymentIntentId,
-  //       );
-
-  //       emit(CheckoutSuccess(orderId));
-  //     } else {
-  //       emit(CheckoutError(
-  //           'Invalid state transition: Payment success received before checkout initiation'));
-  //     }
-  //   } catch (e) {
-  //     emit(CheckoutError(e.toString()));
-  //   }
-  // }
-// }
 
   Future<void> _onInitiateCheckout(
     InitiateCheckoutEvent event,
@@ -163,13 +120,13 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
 
       if (event.paymentMethod == 'cod') {
         final orderId = await _checkoutRepository.createOrder(
-          addressId: event.addressId,
-          items: event.items,
-          paymentMethod: 'cod',
-          paymentId: null,
-          appliedCoupon: appliedCoupon,
-          couponDiscount: couponDiscount,
-        );
+            addressId: event.addressId,
+            items: event.items,
+            paymentMethod: 'cod',
+            paymentId: null,
+            appliedCoupon: appliedCoupon,
+            couponDiscount: couponDiscount,
+            finalAmount: event.totalAmount);
         emit(CheckoutSuccess(orderId));
       } else if (event.paymentMethod == 'stripe') {
         emit(PaymentProcessing());

@@ -10,14 +10,40 @@ import 'package:vesture_firebase_user/widgets/custom_snackbar.dart';
 import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 
-class ShippingAddressesPage extends StatelessWidget {
-  const ShippingAddressesPage({super.key});
+class ShippingAddressesPage extends StatefulWidget {
+  final bool isSelectionMode;
+  final String? selectedAddressId;
+
+  const ShippingAddressesPage({
+    super.key,
+    this.isSelectionMode = false,
+    this.selectedAddressId,
+  });
+
+  @override
+  State<ShippingAddressesPage> createState() => _ShippingAddressesPageState();
+}
+
+class _ShippingAddressesPageState extends State<ShippingAddressesPage> {
+  String? _selectedId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedId = widget.selectedAddressId;
+    // Load addresses when page initializes
+    Future.microtask(() {
+      context.read<AddressBloc>().add(AddressLoadEvent());
+    });
+    // context.read<AddressBloc>().add(AddressLoadEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shipping Addresses'),
+        title: Text(
+            widget.isSelectionMode ? 'Select Address' : 'Shipping Addresses'),
         elevation: 0,
       ),
       body: BlocConsumer<AddressBloc, AddressState>(
@@ -32,21 +58,31 @@ class ShippingAddressesPage extends StatelessWidget {
           if (state is AddressDeleted) {
             CustomSnackBar.show(
               context,
-              message: 'Address Deleted Succesfully!',
+              message: 'Address Deleted Successfully!',
               textColor: Colors.white,
             );
           }
         },
         builder: (context, state) {
-          if (state is AddressInitial) {
-            context.read<AddressBloc>().add(AddressLoadEvent());
+          if (state is AddressInitial || state is AddressLoading) {
             return buildLoadingIndicator(context: context);
           }
-
-          if (state is AddressLoading) {
-            return buildLoadingIndicator(context: context);
+          if (state is AddressError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${state.message}'),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<AddressBloc>().add(AddressLoadEvent());
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
           }
-
           if (state is AddressLoaded || state is AddressUpdated) {
             final addresses = (state is AddressLoaded)
                 ? state.addresses
@@ -81,12 +117,47 @@ class ShippingAddressesPage extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final address = addresses[index];
+
+                if (widget.isSelectionMode) {
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0),
+                    ),
+                    child: RadioListTile<String>(
+                      title: Text(
+                        address['name'] ?? '',
+                        style: styling(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 19,
+                            fontFamily: 'Poppins-SemiBold'),
+                      ),
+                      subtitle: Text(
+                        '${address['houseName']}\n'
+                        '${address['locality']}\n'
+                        '${address['district']}, ${address['city']}\n'
+                        '${address['state']} - ${address['pincode']}\n'
+                        'Phone: ${address['phone']}',
+                        style: styling(height: 1.5),
+                      ),
+                      value: address['id'] as String,
+                      groupValue: _selectedId,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedId = value;
+                        });
+                        Navigator.pop(context, value);
+                      },
+                    ),
+                  );
+                }
+
                 return Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0),
                   ),
-                  shadowColor: Color.fromRGBO(196, 28, 13, 0.829),
+                  shadowColor: const Color.fromRGBO(196, 28, 13, 0.829),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -171,6 +242,7 @@ class ShippingAddressesPage extends StatelessWidget {
               },
             );
           }
+
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(8.0),

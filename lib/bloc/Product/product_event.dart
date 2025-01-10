@@ -58,3 +58,11 @@ class VisualSearchEvent extends ProductEvent {
 }
 
 class ClearSearchEvent extends ProductEvent {}
+
+class FetchProductsByBrandEvent extends ProductEvent {
+  final String brandId;
+
+  FetchProductsByBrandEvent({required this.brandId});
+}
+
+class FetchBrandsEvent extends ProductEvent {}

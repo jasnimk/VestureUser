@@ -96,10 +96,6 @@ buildProductGridItem({
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '⭐⭐⭐⭐⭐(5)',
-                          style: TextStyle(fontSize: 10),
-                        ),
                         Text(
                           product.productName,
                           style: styling(
@@ -139,30 +135,6 @@ buildProductGridItem({
   );
 }
 
-// buildProductGridView({
-//   required List<dynamic> products,
-//   required BuildContext context,
-//   VoidCallback? Function(dynamic product)? onItemTap,
-// }) {
-//   return GridView.builder(
-//     padding: const EdgeInsets.all(10),
-//     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//       crossAxisCount: 2,
-//       childAspectRatio: 0.65,
-//       crossAxisSpacing: 2,
-//       mainAxisSpacing: 2,
-//     ),
-//     itemCount: products.length,
-//     itemBuilder: (context, index) {
-//       final product = products[index];
-//       return buildProductGridItem(
-//         context: context,
-//         product: product,
-//         onTap: onItemTap != null ? () => onItemTap(product) : null,
-//       );
-//     },
-//   );
-// }
 buildProductGridView({
   required List<dynamic> products,
   required BuildContext context,

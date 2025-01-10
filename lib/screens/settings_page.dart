@@ -10,7 +10,11 @@ import 'package:vesture_firebase_user/bloc/bloc/userprofile_event.dart';
 import 'package:vesture_firebase_user/bloc/bloc/userprofile_state.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_cubit.dart';
 import 'package:vesture_firebase_user/bloc/cubit/theme_state.dart';
+import 'package:vesture_firebase_user/screens/aboutus.dart';
+import 'package:vesture_firebase_user/screens/faq_screen.dart';
 import 'package:vesture_firebase_user/screens/forgot_password.dart';
+import 'package:vesture_firebase_user/screens/p_policy_screen.dart';
+import 'package:vesture_firebase_user/screens/support_screen.dart';
 import 'package:vesture_firebase_user/widgets/custom_appbar.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 import 'package:vesture_firebase_user/widgets/custom_capture.dart';
@@ -182,13 +186,48 @@ class SettingsPage extends StatelessWidget {
                             ],
                           ),
                         ),
-                        textWidget('About US', context),
+                        TextButton(
+                          child: textWidget('About Us', context),
+                          onPressed: () {
+                            Navigator.of(context)
+                                .push(MaterialPageRoute(builder: (ctx) {
+                              return AboutUsScreen();
+                            }));
+                          },
+                        ),
                         const SizedBox(height: 8),
-                        textWidget('FAQs', context),
+                        TextButton(
+                          child: textWidget('FAQs ', context),
+                          onPressed: () {
+                            Navigator.of(context)
+                                .push(MaterialPageRoute(builder: (ctx) {
+                              return FaqScreen();
+                            }));
+                          },
+                        ),
                         const SizedBox(height: 8),
-                        textWidget('Support', context),
+                        TextButton(
+                          child: textWidget('Support', context),
+                          onPressed: () {
+                            Navigator.of(context)
+                                .push(MaterialPageRoute(builder: (ctx) {
+                              return SupportScreen(
+                                recieverUserEmail: 'admin@vesture.com',
+                                recieverUserId: 'o7oZIv2V0gYq8MeGTGZ8',
+                              );
+                            }));
+                          },
+                        ),
                         const SizedBox(height: 8),
-                        textWidget('Privacy Policy', context),
+                        TextButton(
+                          child: textWidget('Privacy Policy', context),
+                          onPressed: () {
+                            Navigator.of(context)
+                                .push(MaterialPageRoute(builder: (ctx) {
+                              return PrivacyPolicyScreen();
+                            }));
+                          },
+                        ),
                         const SizedBox(height: 20),
                         customButton(
                           context: context,

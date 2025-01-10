@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vesture_firebase_user/models/product_filter.dart';
-import 'package:vesture_firebase_user/utilities/color_utility.dart';
+import 'package:vesture_firebase_user/utilities&Services/color_utility.dart';
 import 'package:vesture_firebase_user/widgets/custom_button.dart';
 import 'package:vesture_firebase_user/widgets/textwidget.dart';
 

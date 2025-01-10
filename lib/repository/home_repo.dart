@@ -186,11 +186,10 @@ class HomeRepository {
         .orderBy('createdAt', descending: true) // Sort by creation date
         .snapshots()
         .map((snapshot) {
-      print('Fetched ${snapshot.docs.length} brands'); // Debug log
+      // Debug log
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        print(
-            'Brand data: ${doc.id} - ${data['brandName']} - ${data['brandIcon']?.length ?? 0} bytes'); // Debug log
+        // Debug log
         return BrandModel.fromFirestore(doc);
       }).toList();
     });
@@ -198,16 +197,11 @@ class HomeRepository {
 
   Future<Map<String, List<String>>> getCouponCategoryImages(
       String couponId) async {
-    print('📸 Fetching images for coupon: $couponId');
-
     final couponDoc =
         await _firestore.collection('coupons').doc(couponId).get();
     final couponData = couponDoc.data();
 
-    print('📄 Coupon data: $couponData');
-
     if (couponData == null) {
-      print('⚠️ No coupon data found');
       return {};
     }
 
@@ -215,19 +209,13 @@ class HomeRepository {
     final parentCategoryId = couponData['parentCategoryId'] as String?;
     final subCategoryId = couponData['subCategoryId'] as String?;
 
-    print('🏷️ Parent Category ID: $parentCategoryId');
-    print('🏷️ Sub Category ID: $subCategoryId');
-
     Map<String, List<String>> categoryImages = {};
 
     // If subCategoryId exists, only use that. Otherwise use parentCategoryId
     final categoryId = subCategoryId ?? parentCategoryId;
     if (categoryId == null) {
-      print('⚠️ No valid category ID found');
       return {};
     }
-
-    print('🔍 Searching products for category: $categoryId');
 
     // Query based on the appropriate category ID
     final productsQuery = subCategoryId != null
@@ -243,41 +231,28 @@ class HomeRepository {
             .limit(1);
 
     final productsSnapshot = await productsQuery.get();
-    print(
-        '📦 Found ${productsSnapshot.docs.length} products for category $categoryId');
 
     for (var productDoc in productsSnapshot.docs) {
-      print('🏷️ Processing product: ${productDoc.id}');
-
       final variantsSnapshot = await _firestore
           .collection('variants')
           .where('productId', isEqualTo: productDoc.id)
           .limit(1)
           .get();
 
-      print(
-          '🎨 Found ${variantsSnapshot.docs.length} variants for product ${productDoc.id}');
-
       for (var variantDoc in variantsSnapshot.docs) {
         final variantData = variantDoc.data();
-        print('📄 Variant data: $variantData');
 
         if (variantData['imageUrls'] != null &&
             variantData['imageUrls'].isNotEmpty) {
           categoryImages[categoryId] =
               List<String>.from(variantData['imageUrls']);
-          print(
-              '✅ Found images for category $categoryId: ${categoryImages[categoryId]}');
           break;
-        } else {
-          print('⚠️ No images found in variant ${variantDoc.id}');
-        }
+        } else {}
       }
 
       if (categoryImages.containsKey(categoryId)) break;
     }
 
-    print('🎉 Final category images map: $categoryImages');
     return categoryImages;
   }
 
