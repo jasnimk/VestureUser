@@ -13,6 +13,7 @@ import 'package:vesture_firebase_user/widgets/custom_snackbar.dart';
 import 'package:vesture_firebase_user/widgets/details_widgets.dart';
 import 'package:vesture_firebase_user/widgets/sheet_sort.dart';
 
+/// A screen displaying the products of a specific category with filter and sorting options.
 class CategoryProductDetailsScreen extends StatefulWidget {
   final String categoryId;
 
@@ -28,6 +29,7 @@ class _CategoryProductDetailsScreenState
   @override
   void initState() {
     super.initState();
+    // Fetch products based on the category ID when the screen is initialized.
     context
         .read<ProductBloc>()
         .add(FetchProductsByCategoryEvent(categoryId: widget.categoryId));
@@ -35,7 +37,6 @@ class _CategoryProductDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-    CategoryModel categoryModel = CategoryModel(id: widget.categoryId);
     return Scaffold(
       appBar: buildCustomAppBar(context: context, title: 'Category Products'),
       body: Column(
@@ -43,7 +44,7 @@ class _CategoryProductDetailsScreenState
           CustomSearch(
             categoryId: widget.categoryId,
           ),
-          // customSearchField(context, categor: categoryModel),
+          // Filter and Sort options row
           customFilterSortRow(
             context: context,
             onFilterPressed: () {
@@ -73,6 +74,7 @@ class _CategoryProductDetailsScreenState
               }
             },
             onSortPressed: () {
+              // Show bottom sheet to sort products based on selected option
               showSortBottomSheet(
                 context,
                 (sortOption) {
@@ -86,6 +88,7 @@ class _CategoryProductDetailsScreenState
               );
             },
           ),
+          // BlocBuilder to manage different product loading states
           BlocBuilder<ProductBloc, ProductState>(
             builder: (context, state) {
               if (state is ProductLoadingState) {
@@ -111,6 +114,7 @@ class _CategoryProductDetailsScreenState
                         products: state.products,
                         context: context,
                         onItemTap: (product) {
+                          // Navigate to product details screen
                           Navigator.push(
                               context,
                               MaterialPageRoute(

@@ -57,12 +57,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _walletBalance = balance;
       });
-    } catch (e) {
-      print('Error loading wallet balance: $e');
-    }
+    } catch (e) {}
   }
 
-  @override
+  /// Builds the main UI of the checkout screen, including address selection, payment methods,
+  /// order summary and displays loading indicator when processing order
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,6 +129,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       bottomNavigationBar: _buildBottomBar(),
     );
   }
+
+  /// Builds the address selection section showing the selected delivery address with option to change
 
   Widget _buildAddressSection() {
     return BlocBuilder<AddressBloc, AddressState>(
@@ -211,6 +212,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Builds the payment method selection section with options for COD, online payment, and wallet
   Widget _buildPaymentMethodSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -280,6 +282,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Builds the bottom bar containing the 'Place Order' button
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -306,9 +309,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Builds the order summary section showing items, prices, and total
   Widget _buildOrderSummary() {
     return EnhancedOrderSummary(shippingCharge: _shippingCharge);
   }
+
+  /// Calculates the maximum applicable discount for a cart item from available discount types
 
   double calculateMaxDiscount(CartItem item) {
     return [
@@ -318,6 +324,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ].reduce((a, b) => a > b ? a : b);
   }
 
+  /// Handles the order placement process including payment processing, validation checks,
+  /// and dispatching appropriate events based on selected payment method
   void _handlePlaceOrder() async {
     if (_isPlacingOrder) return;
 
@@ -367,18 +375,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       double couponDiscount = 0.0;
       if (couponState is CouponApplied) {
         couponDiscount = couponState.discountAmount;
-        print('Applied coupon discount: $couponDiscount'); // Debug log
+        // Debug log
       }
 
       // Calculate final amount INCLUDING coupon discount
       final finalAmount =
           subtotal - itemDiscounts - couponDiscount + _shippingCharge;
-      print('Order calculation:'); // Debug logs
-      print('Subtotal: $subtotal');
-      print('Item discounts: $itemDiscounts');
-      print('Coupon discount: $couponDiscount');
-      print('Shipping: $_shippingCharge');
-      print('Final amount: $finalAmount');
+      // Debug logs
 
       setState(() => _isPlacingOrder = true);
 

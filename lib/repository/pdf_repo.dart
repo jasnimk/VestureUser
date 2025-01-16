@@ -9,10 +9,16 @@ import 'package:share_plus/share_plus.dart';
 import 'package:vesture_firebase_user/models/order_model.dart';
 import 'package:vesture_firebase_user/widgets/custom_snackbar.dart';
 
+/// A class to generate and manage invoice PDFs.
 class InvoiceGenerator {
+  /// Generates an invoice PDF for the given order.
+  ///
+  /// [order] The order model containing order details to be included in the invoice.
+  /// Returns the generated [File] containing the invoice PDF.
   static Future<File> generateInvoice(OrderModel order) async {
     final pdf = pw.Document();
 
+    // Adds content to the PDF document.
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -20,6 +26,7 @@ class InvoiceGenerator {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // Header section with order information.
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -37,6 +44,7 @@ class InvoiceGenerator {
                 ],
               ),
               pw.SizedBox(height: 20),
+              // Table displaying product details.
               pw.Table(
                 border: pw.TableBorder.all(),
                 children: [
@@ -95,6 +103,7 @@ class InvoiceGenerator {
                 ],
               ),
               pw.SizedBox(height: 20),
+              // Footer with totals and charges.
               pw.Container(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Column(
@@ -117,12 +126,18 @@ class InvoiceGenerator {
       ),
     );
 
+    // Save the generated PDF to a temporary file.
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/Invoice_${order.id.substring(0, 8)}.pdf');
     await file.writeAsBytes(await pdf.save());
     return file;
   }
 
+  /// Downloads and shares the generated invoice for the given order.
+  ///
+  /// [order] The order model containing order details for the invoice.
+  /// [share] A boolean to specify whether the invoice should be shared or saved locally.
+  /// [context] The BuildContext for showing snackbars and opening the file.
   static Future<void> downloadAndShare(
       OrderModel order, bool share, BuildContext context) async {
     try {
@@ -133,12 +148,14 @@ class InvoiceGenerator {
       );
       final file = await generateInvoice(order);
 
+      // Share the invoice if requested.
       if (share) {
         await Share.shareXFiles(
           [XFile(file.path)],
           subject: 'Invoice for Order #${order.id.substring(0, 8)}',
         );
       } else {
+        // Save the invoice locally and provide option to open it.
         final output = await getDownloadsDirectory() ??
             await getApplicationDocumentsDirectory();
         final savedFile = await file
