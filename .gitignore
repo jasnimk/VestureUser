@@ -41,3 +41,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+#folder to ignore
+bkp/
+
+#files to ignore
+#files to ignore
+lib/utilities&Services/firebase_ml_service.dart
+lib/utilities&Services/color_service.dart
+lib/utilities&Services/image_reco.dart
+lib/utilities&Services/image_service.dart
+lib/repository/product_repo_dup.dart
